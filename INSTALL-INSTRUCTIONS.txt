@@ -1,0 +1,30 @@
+AUTHOR STORE ORDER TRACKING UPDATE
+
+Replace these files in D:\Projects\Author Page:
+  server.js
+  admin.html
+  index.html
+  js\order-status.js
+
+Keep your existing .env file private and do not upload it to GitHub.
+
+Render environment:
+  Ensure MONGO_URI, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, and ADMIN_TOKEN are configured.
+  PORT is supplied by Render and should not be required in your .env/Render settings.
+
+What this update adds:
+- Admin dashboard can view paid orders and manage paperback status.
+- Fulfilment stages: Order Received -> Order Confirmed -> Shipped -> Delivered.
+- Courier and tracking number are required for Shipped/Delivered.
+- Customers can use the Order Status section on the storefront with their order number and checkout email.
+- E-book-only orders show Digital Delivery and bypass physical shipping.
+- Existing Razorpay payment verification and book prices are preserved in this server version.
+
+After replacing files, from PowerShell:
+  cd "D:\Projects\Author Page"
+  git status
+  git add server.js admin.html index.html js/order-status.js
+  git commit -m "Add order tracking and admin fulfillment management"
+  git push origin main
+
+Then wait for Render deployment to finish. Add ADMIN_TOKEN to Render Environment if it is not already set.
