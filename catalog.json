@@ -4,7 +4,7 @@
     "desc": "Time is a wheel turning endlessly through eras of light and shadow.",
     "image": "images/kaalyug.png",
     "pbId": "book_1_pb",
-    "pbPrice": 2,
+    "pbPrice": 249,
     "ebId": "book_1_eb",
     "ebPrice": 25
   },
@@ -22,7 +22,7 @@
     "desc": "Primal energy, myth, and the ultimate resilience of the cosmos.",
     "image": "images/kali.jpeg",
     "pbId": "book_3_pb",
-    "pbPrice": 399,
+    "pbPrice": 299,
     "ebId": "book_3_eb",
     "ebPrice": 25
   }

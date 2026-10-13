@@ -117,11 +117,11 @@ const transporter = nodemailer.createTransport({
 
 // Author Books Inventory (Synced with catalog.json)
 const BOOKS = [
-  { id: 'book_1_pb', name: 'KaalYug: Shadows of Dark Web (Paperback)', price: 2, type: 'Paperback' },
+  { id: 'book_1_pb', name: 'KaalYug: Shadows of Dark Web (Paperback)', price: 249, type: 'Paperback' },
   { id: 'book_1_eb', name: 'KaalYug: Shadows of Dark Web (E-Book)', price: 25, type: 'E-Book' },
   { id: 'book_2_pb', name: 'Pages of Us (Paperback)', price: 299, type: 'Paperback' },
   { id: 'book_2_eb', name: 'Pages of Us (E-Book)', price: 25, type: 'E-Book' },
-  { id: 'book_3_pb', name: 'The Indestructible Kali (Paperback)', price: 399, type: 'Paperback' },
+  { id: 'book_3_pb', name: 'The Indestructible Kali (Paperback)', price: 299, type: 'Paperback' },
   { id: 'book_3_eb', name: 'The Indestructible Kali (E-Book)', price: 25, type: 'E-Book' }
 ];
 
