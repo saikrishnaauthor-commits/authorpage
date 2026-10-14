@@ -55,19 +55,7 @@ const orderSchema = new mongoose.Schema({
   fulfillmentHistory: { type: Array, default: [] }
 });
 
-
 const Order = mongoose.model('Order', orderSchema);
-
-// Site-wide contact details, editable only through the authenticated admin API.
-const footerSettingsSchema = new mongoose.Schema({
-  _id: { type: String, default: 'site-footer' },
-  email: { type: String, default: '' },
-  linkedin: { type: String, default: '' },
-  twitter: { type: String, default: '' },
-  instagram: { type: String, default: '' },
-  updatedAt: { type: Date, default: Date.now }
-}, { versionKey: false });
-const FooterSettings = mongoose.models.FooterSettings || mongoose.model('FooterSettings', footerSettingsSchema);
 
 
 function generateOrderNumber() {
@@ -105,58 +93,6 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-
-// Public read-only endpoint used by the shared footer on every page.
-app.get('/api/footer-settings', async (req, res) => {
-  try {
-    const settings = await FooterSettings.findById('site-footer').select('email linkedin twitter instagram').lean();
-    res.set('Cache-Control', 'no-store');
-    res.json(settings || { email: '', linkedin: '', twitter: '', instagram: '' });
-  } catch (error) {
-    console.error('Could not load footer settings:', error);
-    res.status(500).json({ error: 'Could not load site contact details.' });
-  }
-});
-
-// Admin-only read and update endpoints.
-app.get('/api/admin/footer-settings', requireAdmin, async (req, res) => {
-  try {
-    const settings = await FooterSettings.findById('site-footer').lean();
-    res.json(settings || { email: '', linkedin: '', twitter: '', instagram: '' });
-  } catch (error) {
-    console.error('Could not load admin footer settings:', error);
-    res.status(500).json({ error: 'Could not load footer settings.' });
-  }
-});
-
-app.put('/api/admin/footer-settings', requireAdmin, async (req, res) => {
-  try {
-    const fields = ['email', 'linkedin', 'twitter', 'instagram'];
-    const values = {};
-    for (const field of fields) {
-      const value = String(req.body?.[field] || '').trim();
-      if (value.length > 500) return res.status(400).json({ error: `${field} is too long.` });
-      if (value && field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        return res.status(400).json({ error: 'Enter a valid email address.' });
-      }
-      if (value && field !== 'email') {
-        try {
-          const parsed = new URL(value);
-          if (parsed.protocol !== 'https:' || !parsed.hostname.includes('.')) throw new Error('invalid');
-        } catch (_) {
-          return res.status(400).json({ error: `Enter a valid HTTPS URL for ${field}.` });
-        }
-      }
-      values[field] = value;
-    }
-    values.updatedAt = new Date();
-    const settings = await FooterSettings.findByIdAndUpdate('site-footer', { $set: values }, { new: true, upsert: true, runValidators: true }).lean();
-    res.json({ message: 'Footer contact details saved.', settings });
-  } catch (error) {
-    console.error('Could not save footer settings:', error);
-    res.status(500).json({ error: 'Could not save footer settings.' });
-  }
-});
 
 // Initialize Razorpay Instance
 const razorpay = new Razorpay({
@@ -204,6 +140,9 @@ const catalogBookSchema = new mongoose.Schema({
   pbPrice: { type: Number, default: 0, min: 0 },
   ebPrice: { type: Number, default: 0, min: 0 },
   ebookDriveFileId: { type: String, default: '' },
+  amazonUrl: { type: String, default: '' },
+  flipkartUrl: { type: String, default: '' },
+  pothiUrl: { type: String, default: '' },
   sampleTitle: { type: String, default: '' },
   sampleSubtitle: { type: String, default: 'Sample Chapter Preview' },
   sampleText: { type: String, default: '' },
@@ -302,6 +241,9 @@ app.get('/api/catalog', async (req, res) => {
         sampleTitle: b.sampleTitle,
         sampleSubtitle: b.sampleSubtitle,
         sampleText: b.sampleText,
+        amazonUrl: b.amazonUrl || '',
+        flipkartUrl: b.flipkartUrl || '',
+        pothiUrl: b.pothiUrl || '',
 
         // Paperback prices saved in MongoDB
         pbPrice: paperback?.currentPrice ?? b.pbPrice,
@@ -353,11 +295,28 @@ app.get('/api/admin/books', requireAdmin, async (req, res) => {
   }
 });
 
+function validateMarketplaceUrl(value, allowedHosts, label) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  let parsed;
+  try { parsed = new URL(raw); } catch { throw new Error(`${label} must be a valid URL.`); }
+  if (parsed.protocol !== 'https:' || !allowedHosts.some(host => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`))) {
+    throw new Error(`${label} must be an HTTPS URL on an approved ${label} domain.`);
+  }
+  return parsed.toString();
+}
+
 async function saveCatalogBook(req, res, existing = null) {
   const body = req.body || {};
   const title = String(body.title || '').trim();
   const desc = String(body.desc || '').trim();
   const image = String(body.image || '').trim();
+  let amazonUrl, flipkartUrl, pothiUrl;
+  try {
+    amazonUrl = validateMarketplaceUrl(body.amazonUrl ?? existing?.amazonUrl, ['amazon.in','amazon.com','amazon.co.uk','amazon.ca','amazon.com.au'], 'Amazon URL');
+    flipkartUrl = validateMarketplaceUrl(body.flipkartUrl ?? existing?.flipkartUrl, ['flipkart.com'], 'Flipkart URL');
+    pothiUrl = validateMarketplaceUrl(body.pothiUrl ?? existing?.pothiUrl, ['pothi.com'], 'Pothi URL');
+  } catch (error) { return res.status(400).json({ error: error.message }); }
   const pbPrice = Number(body.pbPrice);
   const ebPrice = Number(body.ebPrice);
   if (!title) return res.status(400).json({ error: 'Book title is required.' });
@@ -370,7 +329,7 @@ async function saveCatalogBook(req, res, existing = null) {
     const collision = await CatalogBook.findOne({ $or: [{ pbId }, { ebId }, { pbId: ebId }, { ebId: pbId }] });
     if (collision) return res.status(409).json({ error: 'Generated book SKU conflict. Please try again.' });
   }
-  const values = { title, desc, image, pbId, ebId, pbPrice, ebPrice,
+  const values = { title, desc, image, pbId, ebId, pbPrice, ebPrice, amazonUrl, flipkartUrl, pothiUrl,
     sampleTitle: String(body.sampleTitle || title).trim(), sampleSubtitle: String(body.sampleSubtitle || 'Sample Chapter Preview').trim(), sampleText: String(body.sampleText || '').trim(),
     ebookDriveFileId: String(body.ebookDriveFileId || existing?.ebookDriveFileId || '').trim(),
     published: body.published !== false && body.published !== 'false', updatedAt: new Date() };
