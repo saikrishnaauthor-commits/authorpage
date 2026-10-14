@@ -470,11 +470,16 @@ body.trailer-open {
   margin-left: 8px;
 }
 
+
 .book-mrp {
-  color: #888;
-  font-size: 0.85em;
-  font-weight: 400;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  text-decoration: line-through;
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 5px;
 }
+
 
 .book-selling-price {
   color: inherit;
