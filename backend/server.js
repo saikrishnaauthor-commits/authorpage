@@ -696,8 +696,42 @@ app.post('/api/ebooks/verify-otp', async (req, res) => {
   }
 });
 
-// Disable the previous order-number + email-only access path so it cannot bypass OTP.
-app.post('/api/ebooks/access', (req, res) => res.status(410).json({ error: 'Email verification is now required. Request a code using the new e-book login page.' }));
+// E-book login: match order ID + checkout email and issue a short-lived protected session.
+app.post('/api/ebooks/access', async (req, res) => {
+  try {
+    const orderNumber = String(req.body?.orderNumber || '').trim();
+    const email = normalizeEmail(req.body?.email);
+
+    if (!orderNumber || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Enter a valid order ID and purchase email.' });
+    }
+
+    const order = await Order.findOne({
+      orderNumber,
+      customerEmail: email,
+      status: { $in: ['paid', 'completed'] }
+    }).select('orderNumber customerEmail items').lean();
+
+    if (!order) {
+      return res.status(401).json({ error: 'Invalid Order ID or purchase email.' });
+    }
+
+    const ebooks = await getPurchasedEbooks(order);
+    if (!ebooks.length) {
+      return res.status(403).json({ error: 'This order does not contain a purchased e-book.' });
+    }
+
+    return res.json({
+      success: true,
+      token: makeEbookToken(email, order.orderNumber),
+      email,
+      ebooks
+    });
+  } catch (error) {
+    console.error('E-book login error:', error.message);
+    return res.status(500).json({ error: 'Could not verify your order. Please try again.' });
+  }
+});
 
 // Only list e-books included in the order attached to this session.
 
