@@ -1,70 +1,40 @@
 
 async function fetchBooks() {
   try {
-    const response = await fetch('catalog.json');
-
-    if (!response.ok) {
-      throw new Error(`Catalog request failed (${response.status})`);
-    }
-
+    const response = await fetch(`${API_URL}/api/catalog`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Catalogue request failed (${response.status})`);
     const data = await response.json();
+    if (!Array.isArray(data)) throw new Error('The server returned an invalid catalogue.');
 
-    if (!Array.isArray(data)) {
-      throw new Error('catalog.json must contain an array');
-    }
+    catalog = data.map(book => ({
+      ...book,
+      pbMrp: Number(book.pbMrp) || 0,
+      pbPrice: Number(book.pbPrice) || 0,
+      ebMrp: Number(book.ebMrp) || 0,
+      ebPrice: Number(book.ebPrice) || 0
+    }));
 
-    // Public API is the single source of truth for MRP/current price.
-    const priceResponse = await fetch(`${API_URL}/api/books`, { cache: 'no-store' });
-    if (!priceResponse.ok) {
-      throw new Error(`Current prices could not be loaded (${priceResponse.status})`);
-    }
-    const priceData = await priceResponse.json();
-    if (!Array.isArray(priceData)) throw new Error('The server returned an invalid price list.');
-
-    const priceById = new Map(priceData.map(book => [book.id, book]));
-    catalog = data.map(book => {
-      const pb = priceById.get(book.pbId);
-      const eb = priceById.get(book.ebId);
-      if (!pb || !eb) throw new Error(`Prices are missing for ${book.title || 'a book'}.`);
-      return {
-        ...book,
-        pbMrp: Number(pb.mrp),
-        pbPrice: Number(pb.currentPrice),
-        ebMrp: Number(eb.mrp),
-        ebPrice: Number(eb.currentPrice)
-      };
-    });
-
-    // Refresh already-saved cart prices too, so stale browser storage cannot show old totals.
+    // Refresh saved cart prices from the same server-managed catalogue.
     if (typeof cart !== 'undefined' && Array.isArray(cart)) {
-      const cartPriceById = new Map(priceData.map(book => [book.id, book]));
+      const priceById = new Map();
+      for (const book of catalog) {
+        priceById.set(book.pbId, { price: book.pbPrice, name: `${book.title} (Paperback)` });
+        priceById.set(book.ebId, { price: book.ebPrice, name: `${book.title} (E-book)` });
+      }
       cart.forEach(item => {
-        const latest = cartPriceById.get(item.id);
-        if (latest) {
-          item.price = Number(latest.currentPrice);
-          item.name = latest.name;
-        }
+        const latest = priceById.get(item.id);
+        if (latest) { item.price = latest.price; item.name = latest.name; }
       });
       if (typeof saveCart === 'function') saveCart();
     }
   } catch (error) {
-    console.error('Could not load catalog.json:', error);
+    console.error('Could not load public catalogue:', error);
     const container = document.getElementById('books-container');
-
-    if (container) {
-      container.innerHTML = `
-        <p class="catalog-error">
-          We couldn't load the book catalog. Please refresh the page.
-        </p>`;
-    }
+    if (container) container.innerHTML = '<p class="catalog-error">We could not load the book catalogue. Please refresh the page.</p>';
     return;
   }
-
   renderBooks();
-
-  if (typeof updateCartUI === 'function') {
-    updateCartUI();
-  }
+  if (typeof updateCartUI === 'function') updateCartUI();
 }
 
 function escapeHTML(value) {
