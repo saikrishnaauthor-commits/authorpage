@@ -554,10 +554,10 @@ async function getPurchasedEbooks(order) {
   return ebooks;
 }
 
-function makeEbookToken(email, orderNumber) {
+
+function makeEbookToken(email) {
   const payload = Buffer.from(JSON.stringify({
     email,
-    orderNumber,
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS
   })).toString('base64url');
 
@@ -571,6 +571,7 @@ function makeEbookToken(email, orderNumber) {
 
   return `${payload}.${signature}`;
 }
+
 
 function requireEbookSession(req, res, next) {
   const token = String(req.headers.authorization || '')
@@ -607,9 +608,9 @@ function requireEbookSession(req, res, next) {
       Buffer.from(parts[0], 'base64url').toString('utf8')
     );
 
+    
     if (
       !payload.email ||
-      !payload.orderNumber ||
       !payload.exp ||
       payload.exp < Math.floor(Date.now() / 1000)
     ) {
@@ -619,9 +620,10 @@ function requireEbookSession(req, res, next) {
     }
 
     req.ebookEmail = normalizeEmail(payload.email);
-    req.ebookOrderNumber = String(payload.orderNumber);
+    req.ebookOrderNumber = null;
 
     next();
+
   } catch {
     return res.status(401).json({ error: 'Invalid session. Please log in again.' });
   }
@@ -698,12 +700,12 @@ app.post('/api/ebooks/verify-otp', async (req, res) => {
 
 // E-book login: match order ID + checkout email and issue a short-lived protected session.
 
+
 app.post('/api/ebooks/access', async (req, res) => {
   try {
     const orderNumber = String(req.body?.orderNumber || '').trim();
     const email = normalizeEmail(req.body?.email);
 
-    // Validate Order ID and email
     if (
       !orderNumber ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -713,39 +715,52 @@ app.post('/api/ebooks/access', async (req, res) => {
       });
     }
 
-    // Find the order using its ID and purchase email
-    const order = await Order.findOne({
+    // The entered order must belong to this email.
+    const matchingOrder = await Order.findOne({
       orderNumber,
       customerEmail: email,
       status: { $in: ['paid', 'completed'] }
-    })
-      .select('orderNumber customerEmail items status')
-      .lean();
+    }).select('orderNumber').lean();
 
-    if (!order) {
+    if (!matchingOrder) {
       return res.status(401).json({
         error: 'Invalid Order ID or purchase email.'
       });
     }
 
-    // Only grant access to e-books included in this order
-    const ebooks = await getPurchasedEbooks(order);
+    // Collect all eligible orders for this email.
+    const orders = await Order.find({
+      customerEmail: email,
+      status: { $in: ['paid', 'completed'] }
+    }).select('items').lean();
+
+    // Combine books and remove duplicates by book ID.
+    const uniqueBooks = new Map();
+
+    for (const order of orders) {
+      const books = await getPurchasedEbooks(order);
+
+      for (const book of books) {
+        uniqueBooks.set(book.id, book);
+      }
+    }
+
+    const ebooks = [...uniqueBooks.values()];
 
     if (!ebooks.length) {
       return res.status(403).json({
-        error: 'This order does not contain a purchased e-book.'
+        error: 'No purchased e-books were found for this email.'
       });
     }
 
     return res.json({
       success: true,
-      token: makeEbookToken(email, order.orderNumber),
+      token: makeEbookToken(email),
       email,
       ebooks
     });
   } catch (error) {
-    console.error('E-book login error:', error.message);
-
+    console.error('E-book access error:', error.message);
     return res.status(500).json({
       error: 'Could not verify your order. Please try again.'
     });
@@ -753,32 +768,40 @@ app.post('/api/ebooks/access', async (req, res) => {
 });
 
 
+
 // Only list e-books included in the order attached to this session.
 
 // Only list e-books included in the order attached to this session.
+
 app.get('/api/ebooks', requireEbookSession, async (req, res) => {
   try {
-    const order = await Order.findOne({
-      orderNumber: req.ebookOrderNumber,
+    const orders = await Order.find({
       customerEmail: req.ebookEmail,
       status: { $in: ['paid', 'completed'] }
     }).select('items').lean();
 
-    if (!order) {
-      return res.status(401).json({
-        error: 'This order is no longer available. Please log in again.'
-      });
+    const uniqueBooks = new Map();
+
+    for (const order of orders) {
+      const books = await getPurchasedEbooks(order);
+
+      for (const book of books) {
+        uniqueBooks.set(book.id, book);
+      }
     }
 
-    const ebooks = await getPurchasedEbooks(order);
-    return res.json({ email: req.ebookEmail, ebooks });
+    return res.json({
+      email: req.ebookEmail,
+      ebooks: [...uniqueBooks.values()]
+    });
   } catch (error) {
-    console.error('E-book list error:', error);
+    console.error('E-book list error:', error.message);
     return res.status(500).json({
       error: 'Could not load your e-books.'
     });
   }
 });
+
 // Google service account credentials are kept in Render environment variables, never in frontend code.
 // Share each private Drive PDF with the service-account email from GOOGLE_SERVICE_ACCOUNT_JSON.
 let driveTokenCache = { token: '', expiresAt: 0 };
