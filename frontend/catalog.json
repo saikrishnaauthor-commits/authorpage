@@ -1,0 +1,29 @@
+[
+  {
+    "title": "KaalYug: Shadows of Dark Web",
+    "desc": "Time is a wheel turning endlessly through eras of light and shadow.",
+    "image": "images/kaalyug.png",
+    "pbId": "book_1_pb",
+    "pbPrice": 2,
+    "ebId": "book_1_eb",
+    "ebPrice": 25
+  },
+  {
+    "title": "Pages of Us",
+    "desc": "Raw emotion and human connection folded like dried flowers in a diary.",
+    "image": "images/pages-of-us.png",
+    "pbId": "book_2_pb",
+    "pbPrice": 299,
+    "ebId": "book_2_eb",
+    "ebPrice": 25
+  },
+  {
+    "title": "The Indestructible Kali",
+    "desc": "Primal energy, myth, and the ultimate resilience of the cosmos.",
+    "image": "images/kali.jpeg",
+    "pbId": "book_3_pb",
+    "pbPrice": 399,
+    "ebId": "book_3_eb",
+    "ebPrice": 25
+  }
+]
