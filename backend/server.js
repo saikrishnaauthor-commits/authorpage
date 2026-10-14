@@ -697,28 +697,44 @@ app.post('/api/ebooks/verify-otp', async (req, res) => {
 });
 
 // E-book login: match order ID + checkout email and issue a short-lived protected session.
+
 app.post('/api/ebooks/access', async (req, res) => {
   try {
     const orderNumber = String(req.body?.orderNumber || '').trim();
     const email = normalizeEmail(req.body?.email);
 
-    if (!orderNumber || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Enter a valid order ID and purchase email.' });
+    // Validate Order ID and email
+    if (
+      !orderNumber ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
+      return res.status(400).json({
+        error: 'Enter a valid order ID and purchase email.'
+      });
     }
 
+    // Find the order using its ID and purchase email
     const order = await Order.findOne({
       orderNumber,
       customerEmail: email,
       status: { $in: ['paid', 'completed'] }
-    }).select('orderNumber customerEmail items').lean();
+    })
+      .select('orderNumber customerEmail items status')
+      .lean();
 
     if (!order) {
-      return res.status(401).json({ error: 'Invalid Order ID or purchase email.' });
+      return res.status(401).json({
+        error: 'Invalid Order ID or purchase email.'
+      });
     }
 
+    // Only grant access to e-books included in this order
     const ebooks = await getPurchasedEbooks(order);
+
     if (!ebooks.length) {
-      return res.status(403).json({ error: 'This order does not contain a purchased e-book.' });
+      return res.status(403).json({
+        error: 'This order does not contain a purchased e-book.'
+      });
     }
 
     return res.json({
@@ -729,9 +745,13 @@ app.post('/api/ebooks/access', async (req, res) => {
     });
   } catch (error) {
     console.error('E-book login error:', error.message);
-    return res.status(500).json({ error: 'Could not verify your order. Please try again.' });
+
+    return res.status(500).json({
+      error: 'Could not verify your order. Please try again.'
+    });
   }
 });
+
 
 // Only list e-books included in the order attached to this session.
 

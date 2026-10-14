@@ -80,7 +80,10 @@
     try {
       const data = await api('/api/ebooks/access', {
         method: 'POST',
-        body: JSON.stringify({ orderNumber, email: purchaseEmail })
+        body: JSON.stringify({ 
+          orderNumber, 
+          email: purchaseEmail 
+        })
       });
 
       if (!data.token || !Array.isArray(data.ebooks)) {
