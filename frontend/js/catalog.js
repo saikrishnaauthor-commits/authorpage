@@ -47,8 +47,10 @@ function renderBooks() {
     const safeTitle = escapeHTML(title);
     const description = escapeHTML(book.desc || '');
     const image = escapeHTML(book.image || '');
-    const pbPrice = Number(book.pbPrice) || 0;
-    const ebPrice = Number(book.ebPrice) || 0;
+    const pbPrice = Number(book.pbPrice ?? 0);
+    const ebPrice = Number(book.ebPrice ?? 0);
+    const pbMrp = Number(book.pbMrp ?? pbPrice);
+    const ebMrp = Number(book.ebMrp ?? ebPrice);
     const pbId = escapeHTML(book.pbId || '');
     const ebId = escapeHTML(book.ebId || '');
     const isKaalYug = /kaalyug/i.test(title);
@@ -81,8 +83,8 @@ function renderBooks() {
               onclick="addToCart('${pbId}', '${safeTitle.replace(/'/g, '&#39;')} (Paperback)', ${pbPrice})">
               Paperback
               <span class="book-price">
-                ${Number(book.pbMrp) > pbPrice && pbPrice > 0
-                  ? `<del class="book-mrp">₹${Number(book.pbMrp)}</del>`
+                ${pbMrp > pbPrice
+                  ? `<del class="book-mrp">₹${pbMrp}</del>`
                   : ''}
                 <strong class="book-selling-price">
                   ${pbPrice === 0 ? 'FREE' : `₹${pbPrice}`}
