@@ -597,29 +597,53 @@ app.post('/api/create-order', async (req, res) => {
       });
 
       let emailSent = false;
-      try {
-        if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.MAIL_FROM) {
-          throw new Error('SMTP environment variables are incomplete.');
+      
+      // Send confirmation email in the background.
+      void (async () => {
+        try {
+          if (
+            !process.env.SMTP_HOST ||
+            !process.env.SMTP_USER ||
+            !process.env.SMTP_PASS ||
+            !process.env.MAIL_FROM
+          ) {
+            throw new Error('SMTP environment variables are incomplete.');
+          }
+
+          await transporter.sendMail({
+            from: process.env.MAIL_FROM,
+            to: order.customerEmail,
+            subject: 'Your Free Book Order - Sai Krishna Author Store',
+            html: `
+              <h2>Your order is confirmed!</h2>
+              <p>This order was free, so no payment was required.</p>
+              <p><strong>Order Number:</strong> ${order.orderNumber}</p>
+              <h3>Books in your order</h3>
+              <ul>
+                ${order.items.map(item =>
+                  `<li>${item.name} — Qty: ${item.quantity} — FREE</li>`
+                ).join('')}
+              </ul>
+              <p>For e-books, visit the store's e-book access page and use this order number with this email address.</p>
+              <p>Thank you for supporting Sai Krishna Author Store.</p>
+            `
+          });
+
+          order.confirmationEmailSentAt = new Date();
+          await order.save();
+
+          console.log(
+            'Free-order confirmation email sent:',
+            order.orderNumber
+          );
+        } catch (mailErr) {
+          console.error(
+            'Free-order confirmation email failed:',
+            mailErr.message
+          );
         }
-        await transporter.sendMail({
-          from: process.env.MAIL_FROM,
-          to: order.customerEmail,
-          subject: 'Your Free Book Order - Sai Krishna Author Store',
-          html: `
-            <h2>Your order is confirmed!</h2>
-            <p>This order was free, so no payment was required.</p>
-            <p><strong>Order Number:</strong> ${order.orderNumber}</p>
-            <h3>Books in your order</h3>
-            <ul>${order.items.map(item => `<li>${item.name} — Qty: ${item.quantity} — FREE</li>`).join('')}</ul>
-            <p>For e-books, visit the store's e-book access page and use this order number with this email address.</p>
-            <p>Thank you for supporting Sai Krishna Author Store.</p>`
-        });
-        order.confirmationEmailSentAt = new Date();
-        await order.save();
-        emailSent = true;
-      } catch (mailErr) {
-        console.error('Free-order confirmation email failed:', mailErr.message);
-      }
+      })();
+ 
 
       return res.json({
         success: true,
