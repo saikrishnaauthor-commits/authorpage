@@ -55,7 +55,19 @@ const orderSchema = new mongoose.Schema({
   fulfillmentHistory: { type: Array, default: [] }
 });
 
+
 const Order = mongoose.model('Order', orderSchema);
+
+// Site-wide contact details, editable only through the authenticated admin API.
+const footerSettingsSchema = new mongoose.Schema({
+  _id: { type: String, default: 'site-footer' },
+  email: { type: String, default: '' },
+  linkedin: { type: String, default: '' },
+  twitter: { type: String, default: '' },
+  instagram: { type: String, default: '' },
+  updatedAt: { type: Date, default: Date.now }
+}, { versionKey: false });
+const FooterSettings = mongoose.models.FooterSettings || mongoose.model('FooterSettings', footerSettingsSchema);
 
 
 function generateOrderNumber() {
@@ -93,6 +105,58 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+
+// Public read-only endpoint used by the shared footer on every page.
+app.get('/api/footer-settings', async (req, res) => {
+  try {
+    const settings = await FooterSettings.findById('site-footer').select('email linkedin twitter instagram').lean();
+    res.set('Cache-Control', 'no-store');
+    res.json(settings || { email: '', linkedin: '', twitter: '', instagram: '' });
+  } catch (error) {
+    console.error('Could not load footer settings:', error);
+    res.status(500).json({ error: 'Could not load site contact details.' });
+  }
+});
+
+// Admin-only read and update endpoints.
+app.get('/api/admin/footer-settings', requireAdmin, async (req, res) => {
+  try {
+    const settings = await FooterSettings.findById('site-footer').lean();
+    res.json(settings || { email: '', linkedin: '', twitter: '', instagram: '' });
+  } catch (error) {
+    console.error('Could not load admin footer settings:', error);
+    res.status(500).json({ error: 'Could not load footer settings.' });
+  }
+});
+
+app.put('/api/admin/footer-settings', requireAdmin, async (req, res) => {
+  try {
+    const fields = ['email', 'linkedin', 'twitter', 'instagram'];
+    const values = {};
+    for (const field of fields) {
+      const value = String(req.body?.[field] || '').trim();
+      if (value.length > 500) return res.status(400).json({ error: `${field} is too long.` });
+      if (value && field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return res.status(400).json({ error: 'Enter a valid email address.' });
+      }
+      if (value && field !== 'email') {
+        try {
+          const parsed = new URL(value);
+          if (parsed.protocol !== 'https:' || !parsed.hostname.includes('.')) throw new Error('invalid');
+        } catch (_) {
+          return res.status(400).json({ error: `Enter a valid HTTPS URL for ${field}.` });
+        }
+      }
+      values[field] = value;
+    }
+    values.updatedAt = new Date();
+    const settings = await FooterSettings.findByIdAndUpdate('site-footer', { $set: values }, { new: true, upsert: true, runValidators: true }).lean();
+    res.json({ message: 'Footer contact details saved.', settings });
+  } catch (error) {
+    console.error('Could not save footer settings:', error);
+    res.status(500).json({ error: 'Could not save footer settings.' });
+  }
+});
 
 // Initialize Razorpay Instance
 const razorpay = new Razorpay({
@@ -829,8 +893,8 @@ app.get('/api/ebooks/:bookId/pdf', requireEbookSession, async (req, res) => {
     const book = await getEbookConfig(bookId);
     if (!book) return res.status(404).json({ error: 'E-book not found.' });
 
+    
     const order = await Order.findOne({
-      orderNumber: req.ebookOrderNumber,
       customerEmail: req.ebookEmail,
       status: { $in: ['paid', 'completed'] },
       'items.id': bookId
@@ -838,9 +902,10 @@ app.get('/api/ebooks/:bookId/pdf', requireEbookSession, async (req, res) => {
 
     if (!order) {
       return res.status(403).json({
-        error: 'This e-book is not included in your verified order.'
+        error: 'This e-book is not included in your eligible orders.'
       });
     }
+
 
     const accessToken = await getGoogleDriveAccessToken();
     const upstream = await fetch(`https://www.googleapis.com/drive/v3/files/${book.driveFileId}?alt=media`, { headers:{Authorization:`Bearer ${accessToken}`} });

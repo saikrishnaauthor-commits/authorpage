@@ -480,6 +480,12 @@ body.trailer-open {
   margin-right: 5px;
 }
 
+.author-image {
+    width: 280px;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 50%;
+}
 
 .book-selling-price {
   color: inherit;
@@ -499,4 +505,72 @@ body.trailer-open {
     margin-left: 4px;
     gap: 4px;
   }
+}
+/* About Author layout */
+.about-container {
+    display: grid;
+    grid-template-columns: 420px minmax(0, 1fr);
+    gap: 55px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    align-items: start;
+}
+
+/* Large photo that stays visible while reading */
+.author-photo {
+    position: sticky;
+    top: 110px;
+    width: 100%;
+    height: 600px;
+    overflow: hidden;
+    border-radius: 22px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.author-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+/* Biography text */
+.author-content {
+    min-width: 0;
+    line-height: 1.9;
+    text-align: justify;
+    color: #344054;
+    font-size: 17px;
+}
+
+.author-content h1,
+.author-content h2,
+.author-content h3 {
+    text-align: left;
+    line-height: 1.3;
+    color: #152238;
+}
+
+/* Mobile layout */
+@media (max-width: 900px) {
+    .about-container {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        padding: 30px 20px;
+    }
+
+    .author-photo {
+        position: relative;
+        top: auto;
+        width: 100%;
+        max-width: 420px;
+        height: 480px;
+        margin: 0 auto;
+    }
+
+    .author-content {
+        font-size: 16px;
+    }
 }
