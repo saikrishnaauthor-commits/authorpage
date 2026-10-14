@@ -22,3 +22,37 @@ function closePreview() {
   document.getElementById('preview-modal')
     ?.classList.add('hidden');
 }
+
+function openPreview(pdfPath, title, subtitle) {
+  const modal = document.getElementById('preview-modal');
+  const titleElement = document.getElementById('preview-title');
+  const subtitleElement = document.getElementById('preview-subtitle');
+  const content = document.getElementById('preview-content');
+
+  if (!modal || !titleElement || !subtitleElement || !content) return;
+
+  titleElement.textContent = title;
+  subtitleElement.textContent = subtitle;
+  content.replaceChildren();
+
+  const frame = document.createElement('iframe');
+  frame.src = pdfPath;
+  frame.title = `${title} sample chapter`;
+  frame.style.width = '100%';
+  frame.style.height = '100%';
+  frame.style.minHeight = '0';
+  frame.style.border = '0';
+  frame.style.display = 'block';
+  frame.style.border = '0';
+
+  content.appendChild(frame);
+  modal.classList.remove('hidden');
+}
+
+function closePreview() {
+    const modal = document.getElementById("preview-modal");
+    const content = document.getElementById("preview-content");
+
+    if (modal) modal.classList.add("hidden");
+    if (content) content.replaceChildren();
+}

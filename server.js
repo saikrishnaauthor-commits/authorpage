@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 
 const dns = require("node:dns");
 
@@ -41,9 +41,9 @@ const orderSchema = new mongoose.Schema({
   customerEmail: { type: String, required: true },
   items: { type: Array, required: true },
   amountTotal: { type: Number, required: true },
-  razorpayOrderId: { type: String, required: true, unique: true },
+  razorpayOrderId: { type: String, default: undefined, unique: true, sparse: true },
   razorpayPaymentId: { type: String, default: null },
-  status: { type: String, enum: ['created', 'paid', 'failed'], default: 'created' },
+  status: { type: String, enum: ['created', 'paid', 'completed', 'failed'], default: 'created' },
   createdAt: { type: Date, default: Date.now },
   orderNumber: {type: String,unique: true, sparse: true},
   confirmationEmailSentAt: {type: Date,default: null},
@@ -125,18 +125,92 @@ const BOOKS = [
   { id: 'book_3_eb', name: 'The Indestructible Kali (E-Book)', price: 25, type: 'E-Book' }
 ];
 
+// Centralized prices: one MongoDB record per paperback/e-book SKU.
+const bookPriceSchema = new mongoose.Schema({
+  bookId: { type: String, required: true, unique: true },
+  mrp: { type: Number, required: true, min: 0 },
+  currentPrice: { type: Number, required: true, min: 0 },
+  updatedAt: { type: Date, default: Date.now }
+});
+const BookPrice = mongoose.models.BookPrice || mongoose.model('BookPrice', bookPriceSchema);
+
+async function getPricedBooks() {
+  const result = [];
+  for (const book of BOOKS) {
+    // First visit seeds prices from the backend's existing checkout prices.
+    const price = await BookPrice.findOneAndUpdate(
+      { bookId: book.id },
+      { $setOnInsert: { mrp: book.price, currentPrice: book.price, updatedAt: new Date() } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).lean();
+    result.push({ ...book, mrp: price.mrp, currentPrice: price.currentPrice, price: price.currentPrice });
+  }
+  return result;
+}
+
 // 3. API Endpoints
 
-// Get available books
-app.get('/api/books', (req, res) => {
-  res.json(BOOKS);
+// Public book list: frontend display and checkout use these same server-managed prices.
+app.get('/api/books', async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    return res.json(await getPricedBooks());
+  } catch (error) {
+    console.error('Book price fetch error:', error);
+    return res.status(500).json({ error: 'Could not load current book prices.' });
+  }
+});
+
+// Admin: view all centralized MRP/current prices.
+app.get('/api/admin/prices', requireAdmin, async (req, res) => {
+  try {
+    return res.json(await getPricedBooks());
+  } catch (error) {
+    console.error('Admin price fetch error:', error);
+    return res.status(500).json({ error: 'Could not load book prices.' });
+  }
+});
+
+// Admin: update one or more prices from one screen.
+app.put('/api/admin/prices', requireAdmin, async (req, res) => {
+  try {
+    const prices = req.body?.prices;
+    if (!Array.isArray(prices) || prices.length === 0) {
+      return res.status(400).json({ error: 'Provide a list of book prices.' });
+    }
+    const allowedIds = new Set(BOOKS.map(book => book.id));
+    for (const entry of prices) {
+      const mrp = Number(entry.mrp);
+      const currentPrice = Number(entry.currentPrice);
+      if (!allowedIds.has(entry.bookId)) {
+        return res.status(400).json({ error: `Unknown book ID: ${entry.bookId}` });
+      }
+      if (!Number.isFinite(mrp) || !Number.isFinite(currentPrice) ||
+          mrp < 0 || currentPrice < 0 || currentPrice > mrp) {
+        return res.status(400).json({ error: 'Prices must be valid non-negative amounts, and current price cannot exceed MRP.' });
+      }
+    }
+    const saved = [];
+    for (const entry of prices) {
+      const doc = await BookPrice.findOneAndUpdate(
+        { bookId: entry.bookId },
+        { $set: { mrp: Number(entry.mrp), currentPrice: Number(entry.currentPrice), updatedAt: new Date() } },
+        { upsert: true, new: true, runValidators: true }
+      ).lean();
+      saved.push(doc);
+    }
+    return res.json({ success: true, message: 'Book prices saved.', prices: await getPricedBooks() });
+  } catch (error) {
+    console.error('Admin price update error:', error);
+    return res.status(500).json({ error: 'Could not save book prices.' });
+  }
 });
 
 
 // Admin: list paid orders with fulfilment and shipping details.
 app.get('/api/orders', requireAdmin, async (req, res) => {
   try {
-    const orders = await Order.find({ status: 'paid' })
+    const orders = await Order.find({ status: { $in: ['paid', 'completed'] } })
       .select('customerEmail items amountTotal razorpayOrderId razorpayPaymentId status createdAt orderNumber shippingAddress fulfillmentStatus courierName trackingNumber trackingUrl fulfillmentHistory')
       .sort({ createdAt: -1 })
       .lean();
@@ -159,7 +233,7 @@ app.patch('/api/orders/:orderNumber/fulfillment', requireAdmin, async (req, res)
     if (!FULFILLMENT_STAGES.includes(fulfillmentStatus)) {
       return res.status(400).json({ error: 'Invalid fulfilment status.' });
     }
-    const order = await Order.findOne({ orderNumber: req.params.orderNumber, status: 'paid' });
+    const order = await Order.findOne({ orderNumber: req.params.orderNumber, status: { $in: ['paid', 'completed'] } });
     if (!order) return res.status(404).json({ error: 'Paid order not found.' });
     if (!hasPaperback(order)) {
       order.fulfillmentStatus = 'Digital Delivery';
@@ -200,10 +274,10 @@ app.post('/api/order-status', async (req, res) => {
     const orderNumber = String(req.body?.orderNumber || '').trim();
     const email = String(req.body?.email || '').trim().toLowerCase();
     if (!orderNumber || !email) return res.status(400).json({ error: 'Order number and email are required.' });
-    const order = await Order.findOne({ orderNumber, customerEmail: email, status: 'paid' })
+    const order = await Order.findOne({ orderNumber, customerEmail: email, status: { $in: ['paid', 'completed'] } })
       .select('orderNumber customerEmail items amountTotal createdAt fulfillmentStatus courierName trackingNumber trackingUrl fulfillmentHistory')
       .lean();
-    if (!order) return res.status(404).json({ error: 'No paid order matched that order number and email.' });
+    if (!order) return res.status(404).json({ error: 'No completed order matched that order number and email.' });
     const physical = hasPaperback(order);
     return res.json({
       orderNumber: order.orderNumber, items: order.items, amountTotal: order.amountTotal,
@@ -322,12 +396,12 @@ app.post('/api/ebooks/access', async (req, res) => {
     const order = await Order.findOne({
       orderNumber,
       customerEmail: email,
-      status: 'paid'
+      status: { $in: ['paid', 'completed'] }
     }).select('orderNumber customerEmail items').lean();
 
     if (!order) {
       return res.status(404).json({
-        error: 'No paid order matched that order ID and email.'
+        error: 'No completed order matched that order ID and email.'
       });
     }
 
@@ -371,7 +445,7 @@ app.get('/api/ebooks', requireEbookSession, async (req, res) => {
     const order = await Order.findOne({
       orderNumber: req.ebookOrderNumber,
       customerEmail: req.ebookEmail,
-      status: 'paid'
+      status: { $in: ['paid', 'completed'] }
     }).select('items').lean();
 
     if (!order) {
@@ -430,13 +504,13 @@ app.get('/api/ebooks/:bookId/pdf', requireEbookSession, async (req, res) => {
     const order = await Order.findOne({
       orderNumber: req.ebookOrderNumber,
       customerEmail: req.ebookEmail,
-      status: 'paid',
+      status: { $in: ['paid', 'completed'] },
       'items.id': bookId
     }).select('_id').lean();
 
     if (!order) {
       return res.status(403).json({
-        error: 'This e-book is not included in your verified paid order.'
+        error: 'This e-book is not included in your verified order.'
       });
     }
 
@@ -472,57 +546,92 @@ app.get('/api/ebooks/session', requireEbookSession, (req, res) => res.json({ suc
 
 app.post('/api/create-order', async (req, res) => {
   try {
-    const { items, customerEmail, shippingAddress } = req.body;
-    console.log("CHECKOUT REQUEST:", JSON.stringify(req.body, null, 2));
+    const customerEmail = normalizeEmail(req.body?.customerEmail);
+    const items = req.body?.items;
+    const shippingAddress = req.body?.shippingAddress || null;
 
-    if (
-      !customerEmail ||
-      !Array.isArray(items) ||
-      items.length === 0
-    ) {
-      return res.status(400).json({
-        error: 'Valid email and non-empty cart are required.'
-      });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail) ||
+        !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Valid email and non-empty cart are required.' });
     }
 
+    const pricedBooks = await getPricedBooks();
     let totalRupees = 0;
     const verifiedItems = [];
 
-
     for (const item of items) {
-      const book = BOOKS.find(b => b.id === item.id);
-
-      if (!book) {
-        return res.status(400).json({
-          error: `Invalid book ID: ${item.id}`
-        });
-      }
+      const book = pricedBooks.find(b => b.id === item.id);
+      if (!book) return res.status(400).json({ error: `Invalid book ID: ${item.id}` });
 
       const quantity = Number(item.quantity);
-
       if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
-        return res.status(400).json({
-          error: `Invalid quantity for ${book.name}`
-        });
+        return res.status(400).json({ error: `Invalid quantity for ${book.name}` });
       }
 
-      totalRupees += book.price * quantity;
-
+      totalRupees += book.currentPrice * quantity;
       verifiedItems.push({
         id: book.id,
         name: book.name,
-        price: book.price,
+        price: book.currentPrice,
+        mrp: book.mrp,
         quantity,
         type: book.type
       });
     }
 
+    const orderNumber = generateOrderNumber();
+    const hasPhysicalBook = verifiedItems.some(item => item.type === 'Paperback' || item.id.endsWith('_pb'));
+    const fulfillmentStatus = hasPhysicalBook ? 'Order Received' : 'Digital Delivery';
+
+    // Free orders are completed immediately; no Razorpay order/payment is created.
+    if (totalRupees === 0) {
+      const order = await Order.create({
+        customerEmail,
+        items: verifiedItems,
+        amountTotal: 0,
+        orderNumber,
+        status: 'completed',
+        shippingAddress,
+        fulfillmentStatus,
+        fulfillmentHistory: [{ status: fulfillmentStatus, at: new Date() }]
+      });
+
+      let emailSent = false;
+      try {
+        if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.MAIL_FROM) {
+          throw new Error('SMTP environment variables are incomplete.');
+        }
+        await transporter.sendMail({
+          from: process.env.MAIL_FROM,
+          to: order.customerEmail,
+          subject: 'Your Free Book Order - Sai Krishna Author Store',
+          html: `
+            <h2>Your order is confirmed!</h2>
+            <p>This order was free, so no payment was required.</p>
+            <p><strong>Order Number:</strong> ${order.orderNumber}</p>
+            <h3>Books in your order</h3>
+            <ul>${order.items.map(item => `<li>${item.name} — Qty: ${item.quantity} — FREE</li>`).join('')}</ul>
+            <p>For e-books, visit the store's e-book access page and use this order number with this email address.</p>
+            <p>Thank you for supporting Sai Krishna Author Store.</p>`
+        });
+        order.confirmationEmailSentAt = new Date();
+        await order.save();
+        emailSent = true;
+      } catch (mailErr) {
+        console.error('Free-order confirmation email failed:', mailErr.message);
+      }
+
+      return res.json({
+        success: true,
+        freeOrder: true,
+        orderNumber: order.orderNumber,
+        emailSent,
+        amount: 0,
+        currency: 'INR'
+      });
+    }
+
     const amountPaise = Math.round(totalRupees * 100);
-
-    console.log('Verified cart:', verifiedItems);
-    console.log('Razorpay amount:', amountPaise, 'paise');
-    console.log('Cart total:', totalRupees, 'INR');
-
     const razorpayOrder = await razorpay.orders.create({
       amount: amountPaise,
       currency: 'INR',
@@ -534,8 +643,9 @@ app.post('/api/create-order', async (req, res) => {
       items: verifiedItems,
       amountTotal: totalRupees,
       razorpayOrderId: razorpayOrder.id,
-      orderNumber: generateOrderNumber(),
-      status: 'created'
+      orderNumber,
+      status: 'created',
+      shippingAddress
     });
 
     return res.json({
@@ -545,15 +655,11 @@ app.post('/api/create-order', async (req, res) => {
       currency: razorpayOrder.currency,
       keyId: process.env.RAZORPAY_KEY_ID
     });
-
   } catch (error) {
     console.error('Order creation error:', error);
-    return res.status(500).json({
-      error: 'Failed to create payment order.'
-    });
+    return res.status(500).json({ error: 'Failed to create order.' });
   }
 });
-
 
 
 // Verify Payment Signature & Send Confirmation Email API

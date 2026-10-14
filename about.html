@@ -53,6 +53,63 @@
   </div>
 </section>
 
+<!-- Travel Memories Slideshow -->
+<section class="bg-slate-50 py-16">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="text-center mb-8">
+      <p class="text-sm font-semibold uppercase tracking-widest text-indigo-600">
+        Beyond the Pages
+      </p>
+      <h2 class="text-3xl font-bold text-slate-900 mt-2">
+        Travel Memories
+      </h2>
+      <p class="text-gray-600 mt-3">
+        A collection of places, journeys and memorable moments.
+      </p>
+    </div>
+
+    <div class="relative max-w-5xl mx-auto">
+      <div id="travel-slides"
+           class="overflow-hidden rounded-2xl bg-slate-200 shadow-lg">
+        <p class="p-12 text-center text-gray-600">
+          Loading travel photos...
+        </p>
+      </div>
+
+      <button id="travel-prev" type="button"
+        aria-label="Previous photo"
+        class="absolute left-3 top-1/2 -translate-y-1/2
+               rounded-full bg-black/60 text-white w-11 h-11
+               text-2xl hover:bg-black/80">
+        &#8249;
+      </button>
+
+      <button id="travel-next" type="button"
+        aria-label="Next photo"
+        class="absolute right-3 top-1/2 -translate-y-1/2
+               rounded-full bg-black/60 text-white w-11 h-11
+               text-2xl hover:bg-black/80">
+        &#8250;
+      </button>
+
+      <div class="flex items-center justify-between mt-4 gap-4">
+        <p id="travel-counter" class="text-sm text-gray-600"
+           aria-live="polite"></p>
+        <button id="travel-play" type="button"
+          class="rounded-lg bg-indigo-600 text-white px-4 py-2
+                 text-sm font-semibold hover:bg-indigo-700">
+          Pause slideshow
+        </button>
+      </div>
+
+      <div id="travel-dots"
+           class="flex flex-wrap justify-center gap-2 mt-4"></div>
+    </div>
+  </div>
+</section>
+
+<script src="js/travel-gallery.js"></script>
+
 
 
     

@@ -25,11 +25,6 @@ async function checkout() {
         shippingAddress = { address, city, pincode };
     }
 
-    if (typeof window.Razorpay !== 'function') {
-        alert('Payment checkout could not load. Please refresh and try again.');
-        return;
-    }
-
     checkoutInProgress = true;
     try {
         const response = await fetch(`${API_URL}/api/create-order`, {
@@ -38,8 +33,41 @@ async function checkout() {
             body: JSON.stringify({ items: cart, customerEmail: email, shippingAddress })
         });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.orderId || !data.keyId || !data.orderNumber) {
-            throw new Error(data.error || 'The server did not return an Order ID. Please contact support before retrying.');
+        if (!response.ok) {
+            throw new Error(data.error || 'Could not create your order. Please try again.');
+        }
+
+        // A zero-total order is completed by the backend without opening Razorpay.
+        if (data.freeOrder === true && data.orderNumber) {
+            document.getElementById('cart-modal')?.classList.add('hidden');
+            cart = [];
+            saveCart();
+            updateCartUI();
+
+            const modal = document.getElementById('order-success-modal');
+            const orderIdElement = document.getElementById('confirmed-order-id');
+            const emailStatus = document.getElementById('confirmation-email-status');
+            if (orderIdElement) orderIdElement.textContent = data.orderNumber;
+            if (emailStatus) {
+                emailStatus.textContent = data.emailSent
+                    ? 'Your free order is confirmed. Confirmation email sent; use this Order ID and email to access your e-book.'
+                    : 'Your free order is confirmed. No payment was required. Save this Order ID; email delivery may be delayed.';
+            }
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                alert(`Your free order is confirmed. Order ID: ${data.orderNumber}`);
+            }
+            checkoutInProgress = false;
+            return;
+        }
+
+        if (!data.orderId || !data.keyId || !data.orderNumber) {
+            throw new Error(data.error || 'The server did not return payment details. Please contact support before retrying.');
+        }
+        if (typeof window.Razorpay !== 'function') {
+            throw new Error('Payment checkout could not load. Please refresh and try again.');
         }
 
         const options = {
