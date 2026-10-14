@@ -25,10 +25,6 @@ async function checkout() {
         shippingAddress = { address, city, pincode };
     }
 
-    if (typeof window.Razorpay !== 'function') {
-        alert('Payment checkout could not load. Please refresh and try again.');
-        return;
-    }
 
     checkoutInProgress = true;
     try {
@@ -37,10 +33,44 @@ async function checkout() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: cart, customerEmail: email, shippingAddress })
         });
+        
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.orderId || !data.keyId || !data.orderNumber) {
-            throw new Error(data.error || 'The server did not return an Order ID. Please contact support before retrying.');
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Could not create your order.');
         }
+
+        // Free orders do not require Razorpay.
+        if (data.success && data.freeOrder && data.orderNumber) {
+            document.getElementById('cart-modal')?.classList.add('hidden');
+
+            cart = [];
+            saveCart();
+            updateCartUI();
+
+            checkoutInProgress = false;
+
+            showOrderConfirmation(
+                data.orderNumber,
+                'Your free order is confirmed. No payment was required.'
+            );
+
+            return;
+        }
+
+        // Paid orders must still have valid Razorpay details.
+        if (!data.orderId || !data.keyId || !data.orderNumber) {
+            throw new Error(
+                'The server did not return the required payment details. Please contact support.'
+            );
+        }
+
+        if (typeof window.Razorpay !== 'function') {
+            throw new Error(
+                'Payment checkout could not load. Please refresh and try again.'
+            );
+        }
+
 
         const options = {
             key: data.keyId,
