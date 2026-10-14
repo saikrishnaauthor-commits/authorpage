@@ -1,4 +1,3 @@
-// Checkout flow: close/reset the cart and show a dedicated Order ID confirmation modal.
 
 async function checkout() {
     if (checkoutInProgress) return;
@@ -50,13 +49,9 @@ async function checkout() {
             throw new Error(data.error || 'Could not create your order. Please try again.');
         }
 
-        // Free orders do not require Razorpay.
+        // Free orders do not require payment.
         if (data.freeOrder === true && data.orderNumber) {
-            document.getElementById('cart-modal')?.classList.add('hidden');
-
-            cart = [];
-            saveCart();
-            updateCartUI();
+            resetCartAfterOrder();
 
             showCheckoutSuccess(
                 data.orderNumber,
@@ -89,17 +84,13 @@ async function checkout() {
             theme: { color: '#4f46e5' },
 
             handler: async function (paymentResponse) {
-                document.getElementById('cart-modal')?.classList.add('hidden');
+                resetCartAfterOrder();
 
-                cart = [];
-                saveCart();
-                updateCartUI();
-
-                // Display Order ID immediately, without waiting for verification.
+                // Show the Order ID immediately.
                 const statusElement = showCheckoutSuccess(
                     data.orderNumber,
                     hasPaperback,
-                    'Payment received. Verifying payment securely...'
+                    'Payment received. Verifying payment...'
                 );
 
                 try {
@@ -116,21 +107,24 @@ async function checkout() {
                     const result = await verifyResponse.json().catch(() => ({}));
 
                     if (verifyResponse.ok && result.success) {
-                        if (statusElement) {
-                            statusElement.textContent = 'Payment verified successfully. Thank you for your purchase!';
-                        }
+                        setOrderStatus(
+                            statusElement,
+                            'Payment verified successfully. Thank you for your purchase!'
+                        );
                     } else {
-                        if (statusElement) {
-                            statusElement.textContent =
-                                'Payment verification is pending. Please keep your Order ID.';
-                        }
+                        setOrderStatus(
+                            statusElement,
+                            'Payment verification is pending. Please keep your Order ID.'
+                        );
+
                         console.error('Payment verification needs follow-up:', result);
                     }
                 } catch (error) {
-                    if (statusElement) {
-                        statusElement.textContent =
-                            'Payment verification is delayed. Please keep your Order ID and check your order status.';
-                    }
+                    setOrderStatus(
+                        statusElement,
+                        'Payment verification is delayed. Please check your order status later.'
+                    );
+
                     console.error('Payment verification request failed:', error);
                 } finally {
                     checkoutInProgress = false;
@@ -149,6 +143,7 @@ async function checkout() {
         razorpay.on('payment.failed', function (event) {
             checkoutInProgress = false;
             console.error('Razorpay payment failed:', event.error);
+
             alert(
                 event.error?.description ||
                 'Payment failed. Check your payment status before trying again.'
@@ -163,78 +158,44 @@ async function checkout() {
     }
 }
 
+function resetCartAfterOrder() {
+    document.getElementById('cart-modal')?.classList.add('hidden');
+    cart = [];
+    saveCart();
+    updateCartUI();
+}
+
 function showCheckoutSuccess(orderNumber, hasPaperback, statusMessage) {
     const modal = document.getElementById('order-success-modal');
     const idElement = document.getElementById('confirmed-order-id');
 
-    if (idElement) {
-        idElement.textContent = orderNumber;
+    if (!modal || !idElement) {
+        alert(`Order ID: ${orderNumber}\n${statusMessage}`);
+        return null;
     }
+
+    idElement.textContent = orderNumber;
+
+    // Remove the old email-related status and duplicate static payment message.
+    modal.querySelectorAll('#confirmation-email-status, #order-confirmation-status')
+        .forEach(element => element.remove());
+
+    const card = modal.querySelector('[role="dialog"]') ||
+        modal.querySelector('.order-success-card') ||
+        idElement.closest('.bg-white') ||
+        modal.firstElementChild ||
+        modal;
 
     let statusElement = document.getElementById('checkout-order-status');
 
-    if (!statusElement && modal) {
+    if (!statusElement) {
         statusElement = document.createElement('p');
         statusElement.id = 'checkout-order-status';
         statusElement.style.marginTop = '12px';
-
-        const idElementParent = idElement?.parentElement || modal;
-        idElementParent.appendChild(statusElement);
+        idElement.parentElement?.appendChild(statusElement);
     }
 
-    if (statusElement) {
-        statusElement.textContent = statusMessage;
-    }
-
-    addPaperbackDeliveryNotice(modal, hasPaperback);
-
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    } else {
-        alert(`Order ID: ${orderNumber}\n${statusMessage}`);
-    }
-
-    return statusElement;
-}
-
-function showOrderConfirmation(orderNumber, statusMessage) {
-    const idElement = document.getElementById('confirmed-order-id');
-    const statusElement = document.getElementById('order-confirmation-status');
-    const modal = document.getElementById('order-confirmation-modal');
-    if (!idElement || !statusElement || !modal) {
-        console.error('Order confirmation modal is missing from books.html.');
-        alert(`Your Order ID: ${orderNumber}\n${statusMessage}`);
-        return;
-    }
-    idElement.textContent = orderNumber;
     statusElement.textContent = statusMessage;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-async function copyOrderId() {
-    const idElement = document.getElementById('confirmed-order-id');
-    const status = document.getElementById('copy-order-status');
-    const orderNumber = idElement?.textContent?.trim() || '';
-    if (!orderNumber) return;
-    try {
-        await navigator.clipboard.writeText(orderNumber);
-        if (status) status.textContent = 'Order ID copied!';
-    } catch {
-        if (status) status.textContent = 'Please select and copy the Order ID manually.';
-    }
-}
-
-function closeOrderConfirmation() {
-    const modal = document.getElementById('order-confirmation-modal');
-    modal?.classList.add('hidden');
-    modal?.classList.remove('flex');
-}
-
-
-function addPaperbackDeliveryNotice(modal, hasPaperback) {
-    if (!modal) return;
 
     let notice = document.getElementById('paperback-delivery-notice');
 
@@ -243,7 +204,7 @@ function addPaperbackDeliveryNotice(modal, hasPaperback) {
         notice.id = 'paperback-delivery-notice';
         notice.style.marginTop = '12px';
         notice.style.lineHeight = '1.5';
-        modal.appendChild(notice);
+        card.appendChild(notice);
     }
 
     notice.textContent = hasPaperback
@@ -252,23 +213,58 @@ function addPaperbackDeliveryNotice(modal, hasPaperback) {
 
     notice.style.display = hasPaperback ? 'block' : 'none';
 
-    let button = document.getElementById('continue-browsing-button');
+    let continueButton = document.getElementById('continue-browsing-button');
 
-    if (!button) {
-        button = document.createElement('button');
-        button.id = 'continue-browsing-button';
-        button.type = 'button';
-        button.textContent = 'Continue Browsing';
-        button.style.marginTop = '16px';
-        button.style.padding = '10px 16px';
-        button.style.cursor = 'pointer';
+    if (!continueButton) {
+        continueButton = document.createElement('button');
+        continueButton.id = 'continue-browsing-button';
+        continueButton.type = 'button';
+        continueButton.textContent = 'Continue Browsing';
+        continueButton.className =
+            'mt-4 w-full rounded-lg border border-gray-300 px-4 py-3 font-semibold';
 
-        button.onclick = function () {
+        continueButton.addEventListener('click', function () {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             window.location.href = 'books.html';
-        };
+        });
 
-        modal.appendChild(button);
+        card.appendChild(continueButton);
     }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    return statusElement;
+}
+
+function setOrderStatus(element, message) {
+    if (element) {
+        element.textContent = message;
+    }
+}
+
+async function copyOrderId() {
+    const idElement = document.getElementById('confirmed-order-id');
+    const status = document.getElementById('copy-order-status');
+    const orderNumber = idElement?.textContent?.trim() || '';
+
+    if (!orderNumber) return;
+
+    try {
+        await navigator.clipboard.writeText(orderNumber);
+
+        if (status) status.textContent = 'Order ID copied!';
+    } catch {
+        if (status) {
+            status.textContent = 'Please select and copy the Order ID manually.';
+        }
+    }
+}
+
+function closeOrderConfirmation() {
+    const modal = document.getElementById('order-confirmation-modal');
+
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
 }

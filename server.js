@@ -437,7 +437,6 @@ app.post('/api/ebooks/access', async (req, res) => {
   }
 });
 
-// Only list e-books included in the order attached to this session.
 
 // Only list e-books included in the order attached to this session.
 app.get('/api/ebooks', requireEbookSession, async (req, res) => {
@@ -596,8 +595,7 @@ app.post('/api/create-order', async (req, res) => {
         fulfillmentHistory: [{ status: fulfillmentStatus, at: new Date() }]
       });
 
-      let emailSent = false;
-      
+            
       // Send confirmation email in the background.
       void (async () => {
         try {
@@ -649,7 +647,6 @@ app.post('/api/create-order', async (req, res) => {
         success: true,
         freeOrder: true,
         orderNumber: order.orderNumber,
-        emailSent,
         amount: 0,
         currency: 'INR'
       });
@@ -773,7 +770,7 @@ app.post('/api/verify-payment', async (req, res) => {
             <h3>Purchased Items</h3>
             <ul>
               ${existingOrder.items.map(item =>
-                `<li>${item.name} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Qty: ${item.quantity}, ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹${item.price * item.quantity}</li>`
+                `<li>${item.name} — Qty: ${item.quantity}, ₹${item.price * item.quantity}</li>`
               ).join('')}
             </ul>
             <p>Thank you for supporting Sai Krishna Author Store.</p>
@@ -822,37 +819,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-
-function showOrderSuccess(orderNumber, emailSent) {
-  document.getElementById('confirmed-order-id').textContent = orderNumber;
-
-  document.getElementById('confirmation-email-status').textContent =
-    emailSent
-      ? 'Your confirmation email has been sent.'
-      : 'Your order is confirmed. Email delivery may be delayed; please check again later.';
-
-  document.getElementById('copy-order-status').textContent = '';
-
-  const modal = document.getElementById('order-success-modal');
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
-}
-
-async function copyOrderId() {
-  const orderId = document.getElementById('confirmed-order-id').textContent;
-  const status = document.getElementById('copy-order-status');
-
-  try {
-    await navigator.clipboard.writeText(orderId);
-    status.textContent = 'Order ID copied!';
-  } catch {
-    status.textContent = 'Please select and copy the Order ID manually.';
-  }
-}
-
-function closeOrderSuccess() {
-  const modal = document.getElementById('order-success-modal');
-  modal.classList.remove('flex');
-  modal.classList.add('hidden');
-}
 
