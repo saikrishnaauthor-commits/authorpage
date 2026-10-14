@@ -12,7 +12,26 @@
 <script src="js/config.js"></script><script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const retailers=[['Amazon','amazonUrl','bg-amber-100 text-amber-900'],['Flipkart','flipkartUrl','bg-blue-100 text-blue-900'],['Pothi','pothiUrl','bg-emerald-100 text-emerald-900']];
-function validRetailerUrl(label,url){try{const u=new URL(url);const host=u.hostname.toLowerCase();const allowed=label==='Amazon'?/(^|\\.)amazon\\.(in|com|co\\.uk|ca|com\\.au)$/.test(host):label==='Flipkart'?/(^|\\.)flipkart\\.com$/.test(host):label==='Pothi'?/(^|\\.)pothi\\.com$/.test(host):false;return u.protocol==='https:'&&allowed;}catch{return false;}}
+function validRetailerUrl(label, url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return false;
+
+    const host = parsed.hostname.toLowerCase();
+
+    const allowedHosts = {
+      Amazon: ['amazon.in', 'amazon.com', 'amazon.co.uk', 'amazon.ca', 'amazon.com.au'],
+      Flipkart: ['flipkart.com'],
+      Pothi: ['pothi.com']
+    };
+
+    return (allowedHosts[label] || []).some(
+      domain => host === domain || host.endsWith('.' + domain)
+    );
+  } catch {
+    return false;
+  }
+}
 async function init(){try{const r=await fetch(API_URL+'/api/catalog',{cache:'no-store'});if(!r.ok)throw Error('Could not load book catalogue.');const books=await r.json();const id=new URLSearchParams(location.search).get('id');const b=books.find(x=>[x.pbId,x.ebId,x.id].includes(id));if(!b)throw Error('Book not found.');document.title=b.title+' | Sai Krishna Author Store';document.getElementById('title').textContent=b.title;document.getElementById('description').textContent=b.desc||'';document.getElementById('cover').src=b.image||'';document.getElementById('cover').alt=b.title+' cover';document.getElementById('paperback').textContent='Paperback · ₹'+(Number(b.pbPrice)||0);document.getElementById('ebook').textContent='E-book · ₹'+(Number(b.ebPrice)||0);document.getElementById('paperback').onclick=()=>location.href='books.html';document.getElementById('ebook').onclick=()=>location.href='ebooks.html';const box=document.getElementById('marketplaces');let count=0;for(const [label,key,cls] of retailers){const url=b[key];if(validRetailerUrl(label,url)){const a=document.createElement('a');a.className='buy '+cls;a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Buy on '+label+' ↗';box.append(a);count++;}}if(!count)box.innerHTML='<p class="text-sm text-slate-500">External purchase links will appear here when configured by the administrator.</p>';document.getElementById('book').classList.remove('hidden');document.getElementById('status').remove();}catch(e){document.getElementById('status').textContent=e.message;}}
 init();
 </script></body></html>
