@@ -207,50 +207,47 @@
  });
 </script>
 
-<!-- Order Confirmation Modal -->
+
+<!-- Order Confirmation -->
 <div id="order-success-modal"
      class="fixed inset-0 bg-black bg-opacity-50 hidden z-[100] items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl text-center">
+  <div class="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl text-center">
+    <div class="text-4xl mb-3">✓</div>
+    <h2 class="text-2xl font-bold text-gray-900">Order Confirmed!</h2>
+    <p class="text-gray-600 mt-2">
+      Your order has been confirmed successfully.
+    </p>
 
-        <div class="text-4xl mb-3">📚</div>
-
-        <h2 class="text-2xl font-bold text-gray-900">
-            Your Order ID
-        </h2>
-
-        <p class="text-sm text-gray-600 mt-2">
-            Keep this ID for your records.
-        </p>
-
-        <div class="mt-5 rounded-lg bg-gray-50 border p-4">
-            <p id="confirmed-order-id"
-               class="text-lg font-bold text-indigo-700 break-all"></p>
-        </div>
-
-        <p id="confirmation-email-status"
-           class="text-sm text-gray-600 mt-4"
-           role="status" aria-live="polite">
-            Payment verification is in progress.
-        </p>
-
-        <button type="button"
-                onclick="copyOrderId()"
-                class="w-full mt-5 bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700">
-            Copy Order ID
-        </button>
-
-        <p id="copy-order-status"
-           class="text-sm text-gray-600 mt-2"
-           aria-live="polite"></p>
-
-        <button type="button"
-                onclick="closeOrderSuccess()"
-                class="w-full mt-3 border border-gray-300 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-100">
-            Continue Browsing
-        </button>
-
+    <div class="mt-5 rounded-lg bg-gray-50 border p-4">
+      <p class="text-sm text-gray-600">Your Order ID</p>
+      <p id="confirmed-order-id"
+         class="text-lg font-bold text-indigo-700 break-all"></p>
+      <button type="button" onclick="copyOrderId()"
+        class="mt-3 bg-indigo-600 text-white font-bold px-5 py-2 rounded-lg">
+        Copy Order ID
+      </button>
+      <p id="copy-order-status" class="text-sm mt-2" aria-live="polite"></p>
     </div>
+
+    <div id="confirmation-details" class="text-left mt-5 space-y-3"></div>
+
+    <p id="confirmation-email-status"
+       class="text-sm text-gray-600 mt-4"
+       role="status" aria-live="polite"></p>
+
+    <button type="button" onclick="closeOrderSuccess()"
+      class="w-full mt-5 border border-gray-300 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-100">
+      Continue Browsing
+    </button>
+
+    <button id="confirmation-ebooks-button" type="button"
+      onclick="window.location.href='ebooks.html'"
+      class="hidden w-full mt-3 bg-indigo-600 text-white font-bold py-3 rounded-lg">
+      Go to My E-books
+    </button>
+  </div>
 </div>
+
 
 </body>
 </html>
