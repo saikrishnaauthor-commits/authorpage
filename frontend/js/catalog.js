@@ -96,8 +96,8 @@ function renderBooks() {
               onclick="addToCart('${ebId}', '${safeTitle.replace(/'/g, '&#39;')} (E-book)', ${ebPrice})">
               E-book
               <span class="book-price">
-                ${Number(book.ebMrp) > ebPrice && ebPrice > 0
-                  ? `<del class="book-mrp">₹${Number(book.ebMrp)}</del>`
+                ${ebMrp > ebPrice
+                  ? `<del class="book-mrp">₹${ebMrp}</del>`
                   : ''}
                 <strong class="book-selling-price">
                   ${ebPrice === 0 ? 'FREE' : `₹${ebPrice}`}

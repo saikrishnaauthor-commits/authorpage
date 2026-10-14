@@ -190,6 +190,14 @@ async function getPricedBooks() {
       result.push({ ...item, bookCatalogId: String(book._id), mrp: price.mrp, currentPrice: price.currentPrice, price: price.currentPrice, updatedAt: price.updatedAt });
     }
   }
+  console.log(
+    'Admin price records:',
+    result.map(p => ({
+      id: p.id,
+      mrp: p.mrp,
+      currentPrice: p.currentPrice
+  }))
+  );
   return result;
 }
 
