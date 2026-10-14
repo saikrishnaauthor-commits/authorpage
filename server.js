@@ -231,6 +231,18 @@ const managedBookSchema = new mongoose.Schema({
 });
 const ManagedBook = mongoose.models.ManagedBook || mongoose.model('ManagedBook', managedBookSchema);
 
+// Metadata overrides let admins edit the three original hardcoded books without changing their checkout IDs.
+const legacyOverrideSchema = new mongoose.Schema({
+  bookId: { type: String, required: true, unique: true },
+  title: { type: String, required: true, trim: true, maxlength: 180 },
+  desc: { type: String, default: '', maxlength: 2000 },
+  image: { type: String, required: true },
+  imageDriveFileId: { type: String, default: '' },
+  published: { type: Boolean, default: true },
+  updatedAt: { type: Date, default: Date.now }
+});
+const LegacyBookOverride = mongoose.models.LegacyBookOverride || mongoose.model('LegacyBookOverride', legacyOverrideSchema);
+
 const LEGACY_CATALOG = [
   { bookId: 'book_1', title: 'KaalYug: Shadows of Dark Web', desc: 'Time is a wheel turning endlessly through eras of light and shadow.', image: 'images/kaalyug.png', samplePdf: 'samples/KaalYug_Shadows_of_Dark_Web_Sample_Chapter.pdf', pbId: 'book_1_pb', ebId: 'book_1_eb', published: true, legacy: true },
   { bookId: 'book_2', title: 'Pages of Us', desc: 'Raw emotion and human connection folded like dried flowers in a diary.', image: 'images/pages-of-us.png', samplePdf: 'samples/Pages_of_Us_Sample_Chapter.pdf', pbId: 'book_2_pb', ebId: 'book_2_eb', published: true, legacy: true },
@@ -323,9 +335,11 @@ app.get('/api/catalog', async (req, res) => {
     const managed = await ManagedBook.find({ published: true }).sort({ createdAt: 1 }).lean();
     const priced = await getPricedBooks();
     const byId = new Map(priced.map(item => [item.id, item]));
-    const legacy = LEGACY_CATALOG.map(book => ({ ...book }));
+    const overrides = await LegacyBookOverride.find({}).lean();
+    const overrideById = new Map(overrides.map(item => [item.bookId, item]));
+    const legacy = LEGACY_CATALOG.map(book => ({ ...book, ...(overrideById.get(book.bookId) || {}) }));
     const dynamic = managed.map(book => ({ bookId: book.bookId, title: book.title, desc: book.desc, image: book.image, pbId: book.pbId, ebId: book.ebId, published: book.published, samplePdf: '' }));
-    return res.json([...legacy, ...dynamic].map(book => {
+    return res.json([...legacy.filter(book => book.published !== false), ...dynamic].map(book => {
       const pb = byId.get(book.pbId), eb = byId.get(book.ebId);
       return { ...book, pbMrp: pb?.mrp ?? 0, pbPrice: pb?.currentPrice ?? 0, ebMrp: eb?.mrp ?? 0, ebPrice: eb?.currentPrice ?? 0 };
     }));
@@ -340,7 +354,9 @@ app.get('/api/admin/books', requireAdmin, async (req, res) => {
   try {
     const priced = await getPricedBooks(true);
     const priceById = new Map(priced.map(item => [item.id, item]));
-    const legacy = LEGACY_CATALOG.map(book => ({ ...book, pbMrp: priceById.get(book.pbId)?.mrp ?? 0, pbPrice: priceById.get(book.pbId)?.currentPrice ?? 0, ebMrp: priceById.get(book.ebId)?.mrp ?? 0, ebPrice: priceById.get(book.ebId)?.currentPrice ?? 0 }));
+    const overrides = await LegacyBookOverride.find({}).lean();
+    const overrideById = new Map(overrides.map(item => [item.bookId, item]));
+    const legacy = LEGACY_CATALOG.map(book => ({ ...book, ...(overrideById.get(book.bookId) || {}), legacy: true, pbMrp: priceById.get(book.pbId)?.mrp ?? 0, pbPrice: priceById.get(book.pbId)?.currentPrice ?? 0, ebMrp: priceById.get(book.ebId)?.mrp ?? 0, ebPrice: priceById.get(book.ebId)?.currentPrice ?? 0 }));
     const managed = await ManagedBook.find({}).sort({ createdAt: -1 }).lean();
     return res.json([...legacy, ...managed.map(book => ({ ...book, legacy: false, pbMrp: priceById.get(book.pbId)?.mrp ?? 0, pbPrice: priceById.get(book.pbId)?.currentPrice ?? 0, ebMrp: priceById.get(book.ebId)?.mrp ?? 0, ebPrice: priceById.get(book.ebId)?.currentPrice ?? 0 }))]);
   } catch (error) {
@@ -387,15 +403,26 @@ app.post('/api/admin/books', requireAdmin, async (req, res) => {
 
 app.put('/api/admin/books/:bookId', requireAdmin, async (req, res) => {
   try {
-    const book = await ManagedBook.findOne({ bookId: req.params.bookId });
-    if (!book) return res.status(404).json({ error: 'Managed book not found. Existing legacy book metadata is read-only in this first release.' });
+    const legacyBook = LEGACY_CATALOG.find(item => item.bookId === req.params.bookId);
     const { title, desc, image } = validateBookPayload(req.body || {});
     const mrpPb = Number(req.body?.pbMrp), pricePb = Number(req.body?.pbPrice);
     const mrpEb = Number(req.body?.ebMrp), priceEb = Number(req.body?.ebPrice);
     if (![mrpPb, pricePb, mrpEb, priceEb].every(n => Number.isFinite(n) && n >= 0) || pricePb > mrpPb || priceEb > mrpEb) return res.status(400).json({ error: 'Enter valid prices. Selling prices must be between zero and MRP.' });
-    Object.assign(book, { title, desc, image, imageDriveFileId: String(req.body?.imageDriveFileId || ''), published: Boolean(req.body?.published), updatedAt: new Date() });
-    await book.save();
-    for (const [bookId, mrp, currentPrice] of [[book.pbId, mrpPb, pricePb], [book.ebId, mrpEb, priceEb]]) {
+    let book;
+    if (legacyBook) {
+      book = await LegacyBookOverride.findOneAndUpdate(
+        { bookId: legacyBook.bookId },
+        { $set: { title, desc, image, imageDriveFileId: String(req.body?.imageDriveFileId || ''), published: Boolean(req.body?.published), updatedAt: new Date() }, $setOnInsert: { bookId: legacyBook.bookId } },
+        { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+      );
+    } else {
+      book = await ManagedBook.findOne({ bookId: req.params.bookId });
+      if (!book) return res.status(404).json({ error: 'Book not found.' });
+      Object.assign(book, { title, desc, image, imageDriveFileId: String(req.body?.imageDriveFileId || ''), published: Boolean(req.body?.published), updatedAt: new Date() });
+      await book.save();
+    }
+    const base = legacyBook || book;
+    for (const [bookId, mrp, currentPrice] of [[base.pbId, mrpPb, pricePb], [base.ebId, mrpEb, priceEb]]) {
       await BookPrice.findOneAndUpdate({ bookId }, { $set: { mrp, currentPrice, updatedAt: new Date() } }, { upsert: true, new: true, runValidators: true });
     }
     return res.json({ success: true, book });
