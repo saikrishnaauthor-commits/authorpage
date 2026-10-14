@@ -204,23 +204,52 @@ async function getEbookConfig(bookId) {
 // 3. API Endpoints
 
 // Public book catalogue for the website.
+
 app.get('/api/catalog', async (req, res) => {
   try {
     res.set('Cache-Control', 'no-store');
-    const [catalog, priced] = await Promise.all([getCatalogBooks(false), getPricedBooks()]);
-    const priceMap = new Map(priced.map(p => [p.id, p.currentPrice]));
-    return res.json(catalog.map(b => ({
-      id: String(b._id), title: b.title, desc: b.desc, image: b.image,
-      pbId: b.pbId, ebId: b.ebId, sampleTitle: b.sampleTitle, sampleSubtitle: b.sampleSubtitle, sampleText: b.sampleText,
-      pbPrice: priceMap.get(b.pbId) ?? b.pbPrice,
-      ebPrice: priceMap.get(b.ebId) ?? b.ebPrice,
-      published: b.published
-    })));
+
+    const [catalog, priced] = await Promise.all([
+      getCatalogBooks(false),
+      getPricedBooks()
+    ]);
+
+    const priceMap = new Map(priced.map(p => [p.id, p]));
+
+    return res.json(catalog.map(b => {
+      const paperback = priceMap.get(b.pbId);
+      const ebook = priceMap.get(b.ebId);
+
+      return {
+        id: String(b._id),
+        title: b.title,
+        desc: b.desc,
+        image: b.image,
+        pbId: b.pbId,
+        ebId: b.ebId,
+        sampleTitle: b.sampleTitle,
+        sampleSubtitle: b.sampleSubtitle,
+        sampleText: b.sampleText,
+
+        // Paperback prices saved in MongoDB
+        pbPrice: paperback?.currentPrice ?? b.pbPrice,
+        pbMrp: paperback?.mrp ?? b.pbPrice,
+
+        // E-book prices saved in MongoDB
+        ebPrice: ebook?.currentPrice ?? b.ebPrice,
+        ebMrp: ebook?.mrp ?? b.ebPrice,
+
+        published: b.published
+      };
+    }));
   } catch (error) {
     console.error('Public catalogue error:', error);
-    return res.status(500).json({ error: 'Could not load the book catalogue.' });
+    return res.status(500).json({
+      error: 'Could not load the book catalogue.'
+    });
   }
 });
+
 
 // Checkout catalogue: flat paperback/e-book SKUs with server-managed prices.
 app.get('/api/books', async (req, res) => {
