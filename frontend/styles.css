@@ -459,3 +459,39 @@ body.trailer-open {
     padding: 14px;
   }
 }
+
+/* Book pricing */
+.book-price {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.book-mrp {
+  color: #888;
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+.book-selling-price {
+  color: inherit;
+  font-weight: 700;
+}
+
+.book-selling-price:where(:not(:empty)) {
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 480px) {
+  .book-purchase-row {
+    gap: 8px;
+  }
+
+  .book-price {
+    margin-left: 4px;
+    gap: 4px;
+  }
+}

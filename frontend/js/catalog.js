@@ -75,10 +75,35 @@ function renderBooks() {
         </div>
         <div class="book-card-content"><p class="book-eyebrow">DISCOVER YOUR NEXT READ</p><h3 class="book-title">${safeTitle}</h3><p class="book-description">${description}</p>${trailers}
           ${previewButton}
+          
           <div class="book-purchase-row">
-            <button class="purchase-button" onclick="addToCart('${pbId}', '${safeTitle.replace(/'/g, '&#39;')} (Paperback)', ${pbPrice})">Paperback <span>₹${pbPrice}</span></button>
-            <button class="purchase-button ebook-purchase" onclick="addToCart('${ebId}', '${safeTitle.replace(/'/g, '&#39;')} (E-book)', ${ebPrice})">E-book <span>₹${ebPrice}</span></button>
+            <button class="purchase-button"
+              onclick="addToCart('${pbId}', '${safeTitle.replace(/'/g, '&#39;')} (Paperback)', ${pbPrice})">
+              Paperback
+              <span class="book-price">
+                ${Number(book.pbMrp) > pbPrice && pbPrice > 0
+                  ? `<del class="book-mrp">₹${Number(book.pbMrp)}</del>`
+                  : ''}
+                <strong class="book-selling-price">
+                  ${pbPrice === 0 ? 'FREE' : `₹${pbPrice}`}
+                </strong>
+              </span>
+            </button>
+
+            <button class="purchase-button ebook-purchase"
+              onclick="addToCart('${ebId}', '${safeTitle.replace(/'/g, '&#39;')} (E-book)', ${ebPrice})">
+              E-book
+              <span class="book-price">
+                ${Number(book.ebMrp) > ebPrice && ebPrice > 0
+                  ? `<del class="book-mrp">₹${Number(book.ebMrp)}</del>`
+                  : ''}
+                <strong class="book-selling-price">
+                  ${ebPrice === 0 ? 'FREE' : `₹${ebPrice}`}
+                </strong>
+              </span>
+            </button>
           </div>
+
         </div>
       </article>`;
   }).join('');
