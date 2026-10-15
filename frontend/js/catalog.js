@@ -1,3 +1,5 @@
+let activeSeries = 'All Books';
+
 async function fetchBooks() {
   let data = null;
   // Prefer the backend catalogue so admin changes appear on the live store without editing catalog.json.
