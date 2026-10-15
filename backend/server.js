@@ -140,6 +140,9 @@ const catalogBookSchema = new mongoose.Schema({
   pbPrice: { type: Number, default: 0, min: 0 },
   ebPrice: { type: Number, default: 0, min: 0 },
   ebookDriveFileId: { type: String, default: '' },
+  sellPaperback: { type: Boolean, default: true },
+  sellEbook: { type: Boolean, default: true },
+  trailers: { type: [String], default: [] },
   amazonUrl: { type: String, default: '' },
   flipkartUrl: { type: String, default: '' },
   pothiUrl: { type: String, default: '' },
@@ -254,6 +257,9 @@ app.get('/api/catalog', async (req, res) => {
         amazonUrl: b.amazonUrl || '',
         flipkartUrl: b.flipkartUrl || '',
         pothiUrl: b.pothiUrl || '',
+        sellPaperback: b.sellPaperback !== false,
+        sellEbook: b.sellEbook !== false,
+        trailers: Array.isArray(b.trailers) ? b.trailers : [],
 
         // Paperback prices saved in MongoDB
         pbPrice: paperback?.currentPrice ?? b.pbPrice,
@@ -280,7 +286,7 @@ app.get('/api/books', async (req, res) => {
   try {
     res.set('Cache-Control', 'no-store');
     const visible = await getCatalogBooks(false);
-    const visibleIds = new Set(visible.flatMap(b => [b.pbId, b.ebId]));
+    const visibleIds = new Set(visible.flatMap(b => [...(b.sellPaperback === false ? [] : [b.pbId]), ...(b.sellEbook === false ? [] : [b.ebId])]));
     return res.json((await getPricedBooks()).filter(b => visibleIds.has(b.id)));
   } catch (error) {
     console.error('Book price fetch error:', error);
@@ -339,10 +345,16 @@ async function saveCatalogBook(req, res, existing = null) {
     const collision = await CatalogBook.findOne({ $or: [{ pbId }, { ebId }, { pbId: ebId }, { ebId: pbId }] });
     if (collision) return res.status(409).json({ error: 'Generated book SKU conflict. Please try again.' });
   }
+  const sellPaperback = body.sellPaperback === undefined ? (existing?.sellPaperback !== false) : body.sellPaperback !== false && body.sellPaperback !== 'false';
+  const sellEbook = body.sellEbook === undefined ? (existing?.sellEbook !== false) : body.sellEbook !== false && body.sellEbook !== 'false';
+  if (!sellPaperback && !sellEbook) return res.status(400).json({ error: 'Choose at least one format to sell: paperback or e-book.' });
   const nextOrder = existing ? Number(existing.sortOrder) || 0 : ((await CatalogBook.findOne().sort({ sortOrder: -1 }).select('sortOrder').lean())?.sortOrder ?? -1) + 1;
   const values = { title, desc, image, pbId, ebId, pbPrice, ebPrice, amazonUrl, flipkartUrl, pothiUrl,
     sampleTitle: String(body.sampleTitle || title).trim(), sampleSubtitle: String(body.sampleSubtitle || 'Sample Chapter Preview').trim(), sampleText: String(body.sampleText || '').trim(),
     ebookDriveFileId: String(body.ebookDriveFileId || existing?.ebookDriveFileId || '').trim(),
+    sellPaperback,
+    sellEbook,
+    trailers: (() => { const raw = body.trailers === undefined ? (existing?.trailers || []) : body.trailers; const list = Array.isArray(raw) ? raw : String(raw || '').split(/\r?\n/); return [...new Set(list.map(v => String(v || '').trim()).filter(Boolean).map(v => { let u; try { u = new URL(v); } catch { throw new Error('Each trailer must be a valid YouTube URL.'); } if (u.protocol !== 'https:' || !(u.hostname === 'youtu.be' || u.hostname === 'youtube.com' || u.hostname.endsWith('.youtube.com') || u.hostname === 'www.youtube-nocookie.com')) throw new Error('Trailer links must be YouTube URLs.'); return u.toString(); }))]; })(),
     series: String(body.series ?? existing?.series ?? '').trim().slice(0, 100),
     sortOrder: Number.isFinite(Number(body.sortOrder)) && body.sortOrder !== '' ? Number(body.sortOrder) : nextOrder,
     published: body.published !== false && body.published !== 'false', updatedAt: new Date() };
@@ -941,7 +953,7 @@ app.post('/api/create-order', async (req, res) => {
     }
 
     const visibleCatalog = await getCatalogBooks(false);
-    const visibleSkuIds = new Set(visibleCatalog.flatMap(b => [b.pbId, b.ebId]));
+    const visibleSkuIds = new Set(visibleCatalog.flatMap(b => [...(b.sellPaperback === false ? [] : [b.pbId]), ...(b.sellEbook === false ? [] : [b.ebId])]));
     const pricedBooks = (await getPricedBooks()).filter(b => visibleSkuIds.has(b.id));
     let totalRupees = 0;
     const verifiedItems = [];

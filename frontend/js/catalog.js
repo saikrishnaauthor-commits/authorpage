@@ -102,11 +102,15 @@ function renderBooks() {
         ).join('')}</div>
       </div>` : '';
     const detailsLink = `<a class="mt-3 inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900 underline underline-offset-4" href="book-details.html?id=${encodeURIComponent(book.pbId || book.ebId || book.id || '')}">View book details →</a>`;
-    const trailers = isKaalYug ? `
+    const trailerLinks = Array.isArray(book.trailers) ? book.trailers.filter(url => {
+      try { const u = new URL(url); return u.protocol === 'https:' && (u.hostname === 'youtu.be' || u.hostname === 'youtube.com' || u.hostname.endsWith('.youtube.com') || u.hostname === 'www.youtube-nocookie.com'); } catch { return false; }
+    }) : [];
+    const trailers = trailerLinks.length ? `<div class="trailer-actions">${trailerLinks.map((url, i) => `<a class="trailer-button ${i ? 'trailer-button-secondary' : ''}" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">▶</span> Watch Trailer ${i + 1}</a>`).join('')}</div>` : (isKaalYug ? `
       <div class="trailer-actions">
         <button class="trailer-button" onclick="openTrailer('videos/kaalyug-trailer-1.mp4', 'KaalYug — Trailer 1')"><span aria-hidden="true">▶</span> Watch Trailer 1</button>
         <button class="trailer-button trailer-button-secondary" onclick="openTrailer('videos/kaalyug-trailer-2.mp4', 'KaalYug — Trailer 2')"><span aria-hidden="true">▶</span> Watch Trailer 2</button>
-      </div>` : '';
+      </div>` : '');
+    const formatButtons = `${book.sellPaperback === false ? '' : `<button class="purchase-button" onclick="addToCart('${pbId}', '${safeTitle.replace(/'/g, '&#39;')} (Paperback)', ${pbPrice})">Paperback <span>₹${pbPrice}</span></button>`}${book.sellEbook === false ? '' : `<button class="purchase-button ebook-purchase" onclick="addToCart('${ebId}', '${safeTitle.replace(/'/g, '&#39;')} (E-book)', ${ebPrice})">E-book <span>₹${ebPrice}</span></button>`}`;
     return `
       <article class="premium-book-card">
         <div class="book-cover-wrap"><span class="book-number">BOOK ${String(index + 1).padStart(2, '0')}</span>
@@ -114,10 +118,7 @@ function renderBooks() {
         </div>
         <div class="book-card-content"><p class="book-eyebrow">DISCOVER YOUR NEXT READ</p><h3 class="book-title">${safeTitle}</h3><p class="book-description">${description}</p>${trailers}
           ${previewButton}
-          <div class="book-purchase-row">
-            <button class="purchase-button" onclick="addToCart('${pbId}', '${safeTitle.replace(/'/g, '&#39;')} (Paperback)', ${pbPrice})">Paperback <span>₹${pbPrice}</span></button>
-            <button class="purchase-button ebook-purchase" onclick="addToCart('${ebId}', '${safeTitle.replace(/'/g, '&#39;')} (E-book)', ${ebPrice})">E-book <span>₹${ebPrice}</span></button>
-          </div>
+          <div class="book-purchase-row">${formatButtons}</div>
           ${marketplaceButtons}
           ${detailsLink}
         </div>
