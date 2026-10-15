@@ -464,7 +464,7 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
   }
 });
 
-const FULFILLMENT_STAGES = ['Order Received', 'Order Confirmed', 'Shipped', 'In Transit', 'Delivered'];
+const FULFILLMENT_STAGES = ['Order Received', 'Order Confirmed', 'Shipped', 'Delivered'];
 function hasPaperback(order) {
   return (order.items || []).some(item => String(item.type || item.id || '').toLowerCase().includes('paperback') || String(item.id || '').endsWith('_pb'));
 }
