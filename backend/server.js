@@ -488,8 +488,8 @@ app.patch('/api/orders/:orderNumber/fulfillment', requireAdmin, async (req, res)
         return res.status(400).json({ error: 'Courier name and tracking number are required for Shipped, In Transit, and Delivered.' });
       }
     }
-    const previous = order.fulfillmentStatus || 'Order Received';
-    const oldIndex = FULFILLMENT_STAGES.indexOf(previous);
+    const storedPrevious = order.fulfillmentStatus || 'Order Received';
+    const previous = storedPrevious === 'In Transit' ? 'Shipped' : storedPrevious;const oldIndex = FULFILLMENT_STAGES.indexOf(previous);
     const newIndex = FULFILLMENT_STAGES.indexOf(fulfillmentStatus);
     if (newIndex < oldIndex || newIndex > oldIndex + 1) {
       return res.status(400).json({ error: `Move status one step at a time. Current status: ${previous}.` });
