@@ -127,9 +127,9 @@ const BOOKS = [
 
 // Editable catalogue records. Existing SKU IDs are preserved so old carts and orders remain valid.
 const BOOK_CATALOG_DEFAULTS = [
-  { title: 'KaalYug: Shadows of Dark Web', desc: 'Time is a wheel turning endlessly through eras of light and shadow.', image: 'images/kaalyug.png', pbId: 'book_1_pb', ebId: 'book_1_eb', pbPrice: 249, ebPrice: 25, ebookDriveFileId: '1eRI8rapGCk9WwL7RYd7F2zwBj8ikkbwO', sampleTitle: 'KaalYug', sampleSubtitle: 'Sample Chapter Preview', sampleText: 'The winds of transition whispered through the ancient pillars. Time was never a straight line, but a wheel turning endlessly through eras of light and shadow...', published: true },
-  { title: 'Pages of Us', desc: 'Raw emotion and human connection folded like dried flowers in a diary.', image: 'images/pages-of-us.png', pbId: 'book_2_pb', ebId: 'book_2_eb', pbPrice: 299, ebPrice: 25, ebookDriveFileId: '1XXBc9In0OiPflwLyRB44fQWu98PGQ0bZ', sampleTitle: 'Pages of Us', sampleSubtitle: 'Sample Chapter Preview', sampleText: 'Some memories are folded like dried flowers between the pages of an old diary. When opened, they release a fragrance of nostalgia that defies distance and years...', published: true },
-  { title: 'The Indestructible Kali', desc: 'Primal energy, myth, and the ultimate resilience of the cosmos.', image: 'images/kali.jpeg', pbId: 'book_3_pb', ebId: 'book_3_eb', pbPrice: 299, ebPrice: 25, ebookDriveFileId: '1N8lwC2Wm_Qvygq3lrr4q0zl18hmLVvln', sampleTitle: 'The Indestructible Kali', sampleSubtitle: 'Sample Chapter Preview', sampleText: 'Beyond the veil of ordinary perception lies the primal energy that sustains and transforms the cosmos. Unbound by time or form, this force represents ultimate resilience...', published: true }
+  { title: 'KaalYug: Shadows of Dark Web', desc: 'Time is a wheel turning endlessly through eras of light and shadow.', image: 'images/kaalyug.png', pbId: 'book_1_pb', ebId: 'book_1_eb', pbPrice: 249, ebPrice: 25, ebookDriveFileId: '1eRI8rapGCk9WwL7RYd7F2zwBj8ikkbwO', sampleTitle: 'KaalYug', sampleSubtitle: 'Sample Chapter Preview', sampleText: 'The winds of transition whispered through the ancient pillars. Time was never a straight line, but a wheel turning endlessly through eras of light and shadow...', published: true, series: '', sortOrder: 0 },
+  { title: 'Pages of Us', desc: 'Raw emotion and human connection folded like dried flowers in a diary.', image: 'images/pages-of-us.png', pbId: 'book_2_pb', ebId: 'book_2_eb', pbPrice: 299, ebPrice: 25, ebookDriveFileId: '1XXBc9In0OiPflwLyRB44fQWu98PGQ0bZ', sampleTitle: 'Pages of Us', sampleSubtitle: 'Sample Chapter Preview', sampleText: 'Some memories are folded like dried flowers between the pages of an old diary. When opened, they release a fragrance of nostalgia that defies distance and years...', published: true, series: '', sortOrder: 1 },
+  { title: 'The Indestructible Kali', desc: 'Primal energy, myth, and the ultimate resilience of the cosmos.', image: 'images/kali.jpeg', pbId: 'book_3_pb', ebId: 'book_3_eb', pbPrice: 299, ebPrice: 25, ebookDriveFileId: '1N8lwC2Wm_Qvygq3lrr4q0zl18hmLVvln', sampleTitle: 'The Indestructible Kali', sampleSubtitle: 'Sample Chapter Preview', sampleText: 'Beyond the veil of ordinary perception lies the primal energy that sustains and transforms the cosmos. Unbound by time or form, this force represents ultimate resilience...', published: true, series: '', sortOrder: 2 }
 ];
 const catalogBookSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
@@ -146,6 +146,8 @@ const catalogBookSchema = new mongoose.Schema({
   sampleTitle: { type: String, default: '' },
   sampleSubtitle: { type: String, default: 'Sample Chapter Preview' },
   sampleText: { type: String, default: '' },
+  series: { type: String, default: '', trim: true, maxlength: 100 },
+  sortOrder: { type: Number, default: 0 },
   published: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
@@ -155,13 +157,19 @@ const CatalogBook = mongoose.models.CatalogBook || mongoose.model('CatalogBook',
 async function ensureCatalogSeed() {
   const count = await CatalogBook.countDocuments();
   if (count === 0) {
-    await CatalogBook.insertMany(BOOK_CATALOG_DEFAULTS.map(b => ({ ...b, updatedAt: new Date() })));
+    await CatalogBook.insertMany(BOOK_CATALOG_DEFAULTS.map((b, index) => ({ ...b, sortOrder: index, updatedAt: new Date() })));
+    return;
+  }
+  // One-time migration for older records that predate sortOrder: preserve their original creation order.
+  const existing = await CatalogBook.find({}).sort({ createdAt: 1, _id: 1 }).select('_id sortOrder createdAt').lean();
+  if (existing.length > 1 && existing.every(book => book.sortOrder == null || Number(book.sortOrder) === 0)) {
+    await Promise.all(existing.map((book, index) => CatalogBook.updateOne({ _id: book._id }, { $set: { sortOrder: index } })));
   }
 }
 async function getCatalogBooks(includeUnpublished = false) {
   await ensureCatalogSeed();
   const filter = includeUnpublished ? {} : { published: true };
-  return CatalogBook.find(filter).sort({ createdAt: 1 }).lean();
+  return CatalogBook.find(filter).sort({ sortOrder: 1, createdAt: 1, _id: 1 }).lean();
 }
 function skuId(prefix, title) {
   const slug = String(title || 'book').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 28) || 'book';
@@ -241,6 +249,8 @@ app.get('/api/catalog', async (req, res) => {
         sampleTitle: b.sampleTitle,
         sampleSubtitle: b.sampleSubtitle,
         sampleText: b.sampleText,
+        series: b.series || '',
+        sortOrder: Number(b.sortOrder) || 0,
         amazonUrl: b.amazonUrl || '',
         flipkartUrl: b.flipkartUrl || '',
         pothiUrl: b.pothiUrl || '',
@@ -329,9 +339,12 @@ async function saveCatalogBook(req, res, existing = null) {
     const collision = await CatalogBook.findOne({ $or: [{ pbId }, { ebId }, { pbId: ebId }, { ebId: pbId }] });
     if (collision) return res.status(409).json({ error: 'Generated book SKU conflict. Please try again.' });
   }
+  const nextOrder = existing ? Number(existing.sortOrder) || 0 : ((await CatalogBook.findOne().sort({ sortOrder: -1 }).select('sortOrder').lean())?.sortOrder ?? -1) + 1;
   const values = { title, desc, image, pbId, ebId, pbPrice, ebPrice, amazonUrl, flipkartUrl, pothiUrl,
     sampleTitle: String(body.sampleTitle || title).trim(), sampleSubtitle: String(body.sampleSubtitle || 'Sample Chapter Preview').trim(), sampleText: String(body.sampleText || '').trim(),
     ebookDriveFileId: String(body.ebookDriveFileId || existing?.ebookDriveFileId || '').trim(),
+    series: String(body.series ?? existing?.series ?? '').trim().slice(0, 100),
+    sortOrder: Number.isFinite(Number(body.sortOrder)) && body.sortOrder !== '' ? Number(body.sortOrder) : nextOrder,
     published: body.published !== false && body.published !== 'false', updatedAt: new Date() };
   const saved = existing
     ? await CatalogBook.findByIdAndUpdate(existing._id, { $set: values }, { new: true, runValidators: true }).lean()
@@ -353,6 +366,26 @@ app.post('/api/admin/books', requireAdmin, async (req, res) => {
   try { return await saveCatalogBook(req, res); }
   catch (error) { console.error('Add book error:', error); return res.status(500).json({ error: 'Could not add book.' }); }
 });
+app.put('/api/admin/books/order', requireAdmin, async (req, res) => {
+  try {
+    const ids = req.body?.order;
+    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || !id.trim())) {
+      return res.status(400).json({ error: 'Provide an ordered array of book IDs.' });
+    }
+    const current = await CatalogBook.find({}).select('_id').lean();
+    const currentIds = new Set(current.map(book => String(book._id)));
+    const submitted = new Set(ids);
+    if (ids.length !== currentIds.size || submitted.size !== ids.length || ids.some(id => !currentIds.has(id))) {
+      return res.status(400).json({ error: 'The order must include every catalogue book exactly once. Refresh and try again.' });
+    }
+    await Promise.all(ids.map((id, index) => CatalogBook.updateOne({ _id: id }, { $set: { sortOrder: index, updatedAt: new Date() } })));
+    return res.json({ success: true, message: 'Book order saved.', order: ids });
+  } catch (error) {
+    console.error('Save book order error:', error);
+    return res.status(500).json({ error: 'Could not save the book order.' });
+  }
+});
+
 app.put('/api/admin/books/:id', requireAdmin, async (req, res) => {
   try {
     const existing = await CatalogBook.findById(req.params.id);

@@ -40,9 +40,30 @@ function renderBooks() {
   const container = document.getElementById('books-container');
   if (!container) { console.warn('No #books-container on this page.'); return; }
   if (!Array.isArray(catalog) || catalog.length === 0) {
-    container.innerHTML = '<p>No books are available right now.</p>'; return;
+    container.innerHTML = '<p>No books are available right now.</p>';
+    const filters = document.getElementById('series-filters'); if (filters) filters.replaceChildren();
+    return;
   }
-  container.innerHTML = catalog.map((book, index) => {
+  const filters = document.getElementById('series-filters');
+  const seriesNames = [...new Set(catalog.map(book => String(book.series || '').trim()).filter(Boolean))];
+  if (filters) {
+    filters.innerHTML = '';
+    const names = ['All Books', ...seriesNames];
+    if (!names.includes(activeSeries)) activeSeries = 'All Books';
+    names.forEach(name => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = name;
+      button.dataset.series = name;
+      button.className = `rounded-full border px-5 py-2 text-sm font-semibold transition ${activeSeries === name ? 'bg-indigo-700 text-white border-indigo-700' : 'bg-white text-indigo-800 border-indigo-200 hover:bg-indigo-50'}`;
+      button.setAttribute('aria-pressed', activeSeries === name ? 'true' : 'false');
+      button.addEventListener('click', () => { activeSeries = name; renderBooks(); });
+      filters.append(button);
+    });
+  }
+  const visibleBooks = activeSeries === 'All Books' ? catalog : catalog.filter(book => String(book.series || '').trim() === activeSeries);
+  if (!visibleBooks.length) { container.innerHTML = '<p>No books are assigned to this series yet.</p>'; return; }
+  container.innerHTML = visibleBooks.map((book, index) => {
     const title = String(book.title || 'Untitled');
     const safeTitle = escapeHTML(title);
     const description = escapeHTML(book.desc || '');
