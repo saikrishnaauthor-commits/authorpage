@@ -67,7 +67,7 @@
     }
   }
 
-  // First verify order entitlement, then send a one-time email code.
+  // Login directly using the order ID and purchase email; no OTP is sent.
   async function accessLibrary(event) {
     event.preventDefault();
     const button = $('ebook-login-button');
@@ -78,62 +78,22 @@
       return;
     }
     button.disabled = true;
-    showMessage('Checking your order and sending a verification code…', false);
+    showMessage('Verifying your order…', false);
     try {
-      const data = await api('/api/ebooks/request-otp', {
-        method: 'POST', body: JSON.stringify({ orderNumber, email: purchaseEmail })
+      const data = await api('/api/ebooks/access', {
+        method: 'POST',
+        body: JSON.stringify({ orderNumber, email: purchaseEmail })
       });
-      $('ebook-otp-form')?.classList.remove('hidden');
-      $('ebook-otp')?.focus();
-      showMessage(data.message || 'A verification code has been sent to your purchase email.', false);
-    } catch (error) {
-      showMessage(error.message, true);
-    } finally {
-      button.disabled = false;
-    }
-  }
-
-  async function verifyOtp(event) {
-    event.preventDefault();
-    const button = $('ebook-verify-button');
-    const orderNumber = $('ebook-order-id')?.value.trim();
-    const purchaseEmail = $('ebook-email')?.value.trim().toLowerCase();
-    const otp = $('ebook-otp')?.value.trim();
-    if (!orderNumber || !purchaseEmail || !/^\d{6}$/.test(otp || '')) {
-      showMessage('Enter the order ID, purchase email and 6-digit code.', true);
-      return;
-    }
-    button.disabled = true;
-    showMessage('Verifying your code…', false);
-    try {
-      const data = await api('/api/ebooks/verify-otp', {
-        method: 'POST', body: JSON.stringify({ orderNumber, email: purchaseEmail, otp })
-      });
-      if (!data.token || !Array.isArray(data.ebooks)) throw new Error('Unexpected server response. Please try again.');
+      if (!data.token || !Array.isArray(data.ebooks)) {
+        throw new Error('Unexpected server response. Please try again.');
+      }
       token = data.token;
       email = data.email || purchaseEmail;
       sessionStorage.setItem(TOKEN_KEY, token);
       sessionStorage.setItem(EMAIL_KEY, email);
-      $('ebook-otp-form')?.classList.add('hidden');
       setLoggedIn(true);
       showMessage('');
       renderBooks(data.ebooks);
-    } catch (error) {
-      showMessage(error.message, true);
-    } finally {
-      button.disabled = false;
-    }
-  }
-
-  async function resendOtp() {
-    const orderNumber = $('ebook-order-id')?.value.trim();
-    const purchaseEmail = $('ebook-email')?.value.trim().toLowerCase();
-    if (!orderNumber || !purchaseEmail) return showMessage('Enter your order ID and purchase email first.', true);
-    const button = $('ebook-resend-button');
-    button.disabled = true;
-    try {
-      const data = await api('/api/ebooks/request-otp', { method: 'POST', body: JSON.stringify({ orderNumber, email: purchaseEmail }) });
-      showMessage(data.message || 'A new verification code has been sent.', false);
     } catch (error) {
       showMessage(error.message, true);
     } finally {
@@ -325,7 +285,6 @@
 
     setLoggedIn(false);
     $('ebook-reader-panel')?.classList.add('hidden');
-    $('ebook-otp-form')?.classList.add('hidden');
     $('ebook-library-panel')?.classList.add('hidden');
     $('ebook-page-canvas')?.classList.add('hidden');
 
@@ -355,8 +314,6 @@
     }
 
     $('ebook-email-form')?.addEventListener('submit', accessLibrary);
-    $('ebook-otp-form')?.addEventListener('submit', verifyOtp);
-    $('ebook-resend-button')?.addEventListener('click', resendOtp);
 
     $('ebook-logout')?.addEventListener('click', () => logout(true));
 
