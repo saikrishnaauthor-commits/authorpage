@@ -27,7 +27,7 @@
       <p class="text-sm font-semibold tracking-widest text-indigo-600">YOUR LIBRARY</p>
       <h2 class="text-3xl font-bold text-gray-900 mt-2">My E-books</h2>
       <p class="text-gray-600 mt-3">
-        Enter your order ID and purchase email to access your purchased e-books.
+        Enter your order ID and purchase email. We’ll send a one-time code to verify your purchase.
       </p>
     </div>
 
@@ -68,12 +68,20 @@
           id="ebook-login-button"
           class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-semibold rounded-lg px-4 py-3"
         >
-          Access My E-books
+          Send verification code
         </button>
 
         <p id="ebook-login-message" class="text-sm" aria-live="polite"></p>
       </form>
-
+      <form id="ebook-otp-form" class="hidden mt-5 space-y-4">
+        <div>
+          <label for="ebook-otp" class="block text-sm font-medium text-gray-700 mb-2">6-digit email verification code</label>
+          <input type="text" id="ebook-otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required placeholder="Enter code from email" class="w-full border border-gray-300 rounded-lg px-4 py-3 tracking-widest text-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <p class="text-xs text-gray-500 mt-2">The code expires in 10 minutes. You have up to 5 attempts.</p>
+        </div>
+        <button type="submit" id="ebook-verify-button" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-semibold rounded-lg px-4 py-3">Verify code and open library</button>
+        <button type="button" id="ebook-resend-button" class="w-full text-indigo-700 font-medium hover:underline">Send a new code</button>
+      </form>
     </div>
 
     <div id="ebook-library-panel" class="hidden mt-8">
@@ -104,29 +112,40 @@
 
       <p id="ebook-reader-message" class="hidden text-red-600 mb-3"></p>
 
-      <div class="overflow-auto border rounded-lg bg-gray-100 p-3 text-center">
-        <canvas id="ebook-page-canvas" class="mx-auto max-w-full"></canvas>
+      <div id="ebook-reader-shell" class="ebook-reader-shell border rounded-2xl overflow-hidden bg-stone-100 shadow-inner">
+        <div id="ebook-reader-toolbar" class="ebook-reader-toolbar flex flex-wrap items-center justify-between gap-2 p-3 border-b bg-white">
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="ebook-zoom-out" type="button" class="reader-tool" aria-label="Decrease text size">A−</button>
+            <button id="ebook-zoom-in" type="button" class="reader-tool" aria-label="Increase text size">A+</button>
+            <button id="ebook-theme-toggle" type="button" class="reader-tool">Sepia mode</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="ebook-fullscreen" type="button" class="reader-tool">Full screen</button>
+            <button id="ebook-fit" type="button" class="reader-tool">Fit screen</button>
+          </div>
+        </div>
+        <div id="ebook-epub-view" class="hidden w-full" aria-label="E-book reading area"></div>
+        <div id="ebook-pdf-view" class="hidden overflow-auto p-3 text-center">
+          <canvas id="ebook-page-canvas" class="mx-auto max-w-full"></canvas>
+        </div>
+        <div class="reader-pagebar flex items-center justify-between gap-3 p-3 bg-white border-t">
+          <button id="ebook-prev-page" type="button" class="reader-tool">‹ Previous</button>
+          <div class="flex-1 text-center min-w-0">
+            <p id="ebook-page-count" class="text-sm text-gray-600" aria-live="polite">Opening book…</p>
+            <div class="reader-progress-track mt-2"><div id="ebook-progress" class="reader-progress-fill"></div></div>
+          </div>
+          <button id="ebook-next-page" type="button" class="reader-tool">Next ›</button>
+        </div>
       </div>
-
-      <div class="flex flex-wrap items-center justify-center gap-3 mt-5">
-        <button id="ebook-prev-page" type="button"
-          class="border rounded-lg px-4 py-2">Previous</button>
-        <span id="ebook-page-count" class="text-sm text-gray-600"></span>
-        <button id="ebook-next-page" type="button"
-          class="border rounded-lg px-4 py-2">Next</button>
-        <button id="ebook-zoom-out" type="button"
-          class="border rounded-lg px-3 py-2">-</button>
-        <button id="ebook-zoom-in" type="button"
-          class="border rounded-lg px-3 py-2">+</button>
-      </div>
+      <p class="mt-3 text-xs text-gray-500 text-center">Tip: swipe left/right on mobile or use the arrow keys to turn pages. Text size adjusts automatically to your screen.</p>
     </div>
   </div>
 </section>
     
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+<style>
+.reader-tool{border:1px solid #d6d3d1;border-radius:.65rem;padding:.55rem .85rem;background:#fff;color:#292524;font-weight:600;transition:background .15s,border-color .15s}.reader-tool:hover{background:#f5f5f4;border-color:#a8a29e}.reader-tool:disabled{opacity:.4;cursor:not-allowed}.ebook-reader-shell{--reader-bg:#f5f5f4;--reader-ink:#292524;background:var(--reader-bg);color:var(--reader-ink)}#ebook-epub-view{height:min(72vh,850px);min-height:420px;background:var(--reader-bg);touch-action:pan-y}#ebook-epub-view iframe{background:var(--reader-bg)}#ebook-pdf-view{max-height:72vh;min-height:320px}.reader-progress-track{height:4px;background:#e7e5e4;border-radius:999px;overflow:hidden}.reader-progress-fill{height:100%;width:0;background:#4f46e5;transition:width .2s}.ebook-reader-shell.sepia{--reader-bg:#f4ead5;--reader-ink:#433525}.ebook-reader-shell.sepia .reader-pagebar,.ebook-reader-shell.sepia #ebook-reader-toolbar{background:#f4ead5}.ebook-reader-shell.dark{--reader-bg:#202124;--reader-ink:#e8eaed}.ebook-reader-shell.dark .reader-pagebar,.ebook-reader-shell.dark #ebook-reader-toolbar{background:#292a2d;color:#e8eaed}.ebook-reader-shell.dark .reader-tool{background:#303134;color:#e8eaed;border-color:#5f6368}.ebook-reader-shell:fullscreen{background:var(--reader-bg);display:flex;flex-direction:column;padding:1rem}.ebook-reader-shell:fullscreen #ebook-epub-view{flex:1;height:auto;min-height:0}.ebook-reader-shell:fullscreen #ebook-pdf-view{flex:1;max-height:none}.ebook-reader-shell:fullscreen .reader-pagebar{margin-top:auto}@media(max-width:640px){#ebook-epub-view{height:68vh;min-height:360px}.reader-tool{padding:.5rem .65rem;font-size:.875rem}}</style>
 <script src="js/ebooks.js"></script>
-    <!-- Footer populated from admin settings -->
-    <div id="site-footer"></div>
-    <script src="js/footer.js"></script>
 </body>
 </html>

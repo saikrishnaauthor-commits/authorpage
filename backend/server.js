@@ -140,6 +140,7 @@ const catalogBookSchema = new mongoose.Schema({
   pbPrice: { type: Number, default: 0, min: 0 },
   ebPrice: { type: Number, default: 0, min: 0 },
   ebookDriveFileId: { type: String, default: '' },
+  ebookEpubDriveFileId: { type: String, default: '' },
   sellPaperback: { type: Boolean, default: true },
   sellEbook: { type: Boolean, default: true },
   trailers: { type: [String], default: [] },
@@ -217,10 +218,15 @@ async function getPricedBooks() {
 
 async function getEbookConfig(bookId) {
   const legacy = EBOOKS && EBOOKS[bookId];
-  if (legacy && legacy.driveFileId) return legacy;
   const book = await CatalogBook.findOne({ ebId: bookId }).lean();
-  if (!book || !book.ebookDriveFileId) return null;
-  return { title: book.title, driveFileId: book.ebookDriveFileId };
+  if (book && (book.ebookDriveFileId || book.ebookEpubDriveFileId)) {
+    return {
+      title: book.title || legacy?.title || 'E-book',
+      driveFileId: book.ebookDriveFileId || legacy?.driveFileId || '',
+      epubDriveFileId: book.ebookEpubDriveFileId || ''
+    };
+  }
+  return legacy && legacy.driveFileId ? { ...legacy, epubDriveFileId: '' } : null;
 }
 
 // 3. API Endpoints
@@ -351,7 +357,8 @@ async function saveCatalogBook(req, res, existing = null) {
   const nextOrder = existing ? Number(existing.sortOrder) || 0 : ((await CatalogBook.findOne().sort({ sortOrder: -1 }).select('sortOrder').lean())?.sortOrder ?? -1) + 1;
   const values = { title, desc, image, pbId, ebId, pbPrice, ebPrice, amazonUrl, flipkartUrl, pothiUrl,
     sampleTitle: String(body.sampleTitle || title).trim(), sampleSubtitle: String(body.sampleSubtitle || 'Sample Chapter Preview').trim(), sampleText: String(body.sampleText || '').trim(),
-    ebookDriveFileId: String(body.ebookDriveFileId || existing?.ebookDriveFileId || '').trim(),
+    ebookDriveFileId: String(body.ebookDriveFileId ?? existing?.ebookDriveFileId ?? '').trim(),
+    ebookEpubDriveFileId: String(body.ebookEpubDriveFileId ?? existing?.ebookEpubDriveFileId ?? '').trim(),
     sellPaperback,
     sellEbook,
     trailers: (() => { const raw = body.trailers === undefined ? (existing?.trailers || []) : body.trailers; const list = Array.isArray(raw) ? raw : String(raw || '').split(/\r?\n/); return [...new Set(list.map(v => String(v || '').trim()).filter(Boolean).map(v => { let u; try { u = new URL(v); } catch { throw new Error('Each trailer must be a valid YouTube URL.'); } if (u.protocol !== 'https:' || !(u.hostname === 'youtu.be' || u.hostname === 'youtube.com' || u.hostname.endsWith('.youtube.com') || u.hostname === 'www.youtube-nocookie.com')) throw new Error('Trailer links must be YouTube URLs.'); return u.toString(); }))]; })(),
@@ -617,7 +624,7 @@ async function getPurchasedEbooks(order) {
   const ebooks = [];
   for (const id of candidates) {
     const config = await getEbookConfig(id);
-    if (config) ebooks.push({ id, title: config.title });
+    if (config) ebooks.push({ id, title: config.title, hasEpub: Boolean(config.epubDriveFileId) });
   }
   return ebooks;
 }
@@ -933,6 +940,35 @@ app.get('/api/ebooks/:bookId/pdf', requireEbookSession, async (req, res) => {
     console.error('Protected e-book PDF error:', error.message);
     const status = error.message.includes('not configured') || error.message.includes('valid JSON') ? 503 : 500;
     return res.status(status).json({ error: status === 503 ? 'Private Google Drive access is not configured on the backend.' : 'Could not load this e-book.' });
+  }
+});
+
+app.get('/api/ebooks/:bookId/epub', requireEbookSession, async (req, res) => {
+  try {
+    const bookId = req.params.bookId;
+    const book = await getEbookConfig(bookId);
+    if (!book || !book.epubDriveFileId) return res.status(404).json({ error: 'EPUB edition is not configured for this book.' });
+    const order = await Order.findOne({ customerEmail: req.ebookEmail, status: { $in: ['paid', 'completed'] }, 'items.id': bookId }).select('_id').lean();
+    if (!order) return res.status(403).json({ error: 'This e-book is not included in your eligible orders.' });
+    const accessToken = await getGoogleDriveAccessToken();
+    const upstream = await fetch(`https://www.googleapis.com/drive/v3/files/${book.epubDriveFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!upstream.ok) {
+      const details = await upstream.text();
+      console.error('Google Drive EPUB fetch failed:', upstream.status, details.slice(0, 500));
+      return res.status(502).json({ error: 'Could not load this EPUB. Please contact the store administrator.' });
+    }
+    res.setHeader('Content-Type', 'application/epub+zip');
+    res.setHeader('Content-Disposition', 'inline; filename="reading-copy.epub"');
+    res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    if (upstream.body) {
+      const { Readable } = require('node:stream');
+      Readable.fromWeb(upstream.body).pipe(res);
+    } else res.end(Buffer.from(await upstream.arrayBuffer()));
+  } catch (error) {
+    console.error('Protected e-book EPUB error:', error.message);
+    const status = error.message.includes('not configured') || error.message.includes('valid JSON') ? 503 : 500;
+    return res.status(status).json({ error: status === 503 ? 'Private Google Drive access is not configured on the backend.' : 'Could not load this EPUB.' });
   }
 });
 
