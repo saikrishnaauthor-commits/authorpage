@@ -195,8 +195,12 @@
     host.classList.remove('hidden');
     $('ebook-pdf-view').classList.add('hidden');
     currentRendition = currentEpub.renderTo(host, {
-      width: '100%', height: '100%', spread: 'auto', flow: 'paginated',
-      manager: 'default', allowScriptedContent: false
+      width: '100%',
+      height: '100%',
+      spread: 'none',
+      flow: 'paginated',
+      manager: 'default',
+      allowScriptedContent: false
     });
     applyEpubTheme();
     await currentRendition.display();
@@ -215,7 +219,16 @@
     if (savedCfi) {
       try { await currentRendition.display(savedCfi); } catch { /* stale bookmark: start at the beginning */ }
     }
-    setTimeout(() => currentRendition?.resize(), 60);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (currentRendition && host.isConnected) {
+          currentRendition.resize(
+            host.clientWidth,
+            host.clientHeight
+          );
+        }
+      });
+    });
   }
 
   async function openPdfBook(book) {
