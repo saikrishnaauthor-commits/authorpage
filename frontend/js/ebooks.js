@@ -204,27 +204,45 @@
     });
     applyEpubTheme();
     await currentRendition.display();
+    // Generate locations so EPUB.js can calculate real reading progress.
+    try {
+      await currentEpub.locations.generate(1000);
+    } catch (error) {
+      console.warn('Could not generate EPUB locations:', error);
+    }
+          
     currentRendition.on('relocated', location => {
       const start = location?.start;
-      const end = location?.end;
-      const percentage = start?.percentage || 0;
-      $('ebook-progress').style.width =  `${Math.max(0, Math.min(100, percentage * 100))}%`;
-      $('ebook-page-count').textContent = `${Math.round(percentage * 100)}% read`;
-      // Enable Previous when the reader is not at the beginning.
-      $('ebook-prev-page').disabled = !start?.cfi || percentage <= 0.001;
-      // Enable Next unless the reader is at the end.
-      $('ebook-next-page').disabled = Boolean(location?.atEnd);
-      if (start?.cfi) {
-        try {
-          sessionStorage.setItem(`sksEbookProgress:${book.id}`, start.cfi);
-        } catch {}
+      const cfi = start?.cfi;
+      // Calculate progress from the actual EPUB reading position.
+      let percentage = 0;
+      if (cfi && currentEpub?.locations?.length()) {
+        percentage = currentEpub.locations.percentageFromCfi(cfi) || 0;
       }
+
+      percentage = Math.max(0, Math.min(1, percentage));
+      $('ebook-progress').style.width = `${percentage * 100}%`;
+      $('ebook-page-count').textContent = `${Math.round(percentage * 100)}% read`;
+      
+      // Use the actual page position, not the percentage, for Previous.
+      const sectionIndex = start?.index ?? 0;
+      const pageInSection = start?.displayed?.page ?? 1;
+      const atBeginning = sectionIndex === 0 && pageInSection <= 1;
+      $('ebook-prev-page').disabled = atBeginning;
+      $('ebook-next-page').disabled = Boolean(location?.atEnd);
+
+      if (cfi) {
+        try {
+          sessionStorage.setItem(`sksEbookProgress:${book.id}`, cfi);
+        } catch {}
+
+      }     
     });
 
 
 
       
-    });
+    
     const savedCfi = sessionStorage.getItem(`sksEbookProgress:${book.id}`);
     if (savedCfi) {
       try { await currentRendition.display(savedCfi); } catch { /* stale bookmark: start at the beginning */ }
