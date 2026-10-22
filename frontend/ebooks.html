@@ -144,8 +144,148 @@
 <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
 
 <script src="js/ebooks.js"></script>
+
 <style>
-.reader-tool{border:1px solid #d6d3d1;border-radius:.65rem;padding:.55rem .85rem;background:#fff;color:#292524;font-weight:600;transition:background .15s,border-color .15s}.reader-tool:hover{background:#f5f5f4;border-color:#a8a29e}.reader-tool:disabled{opacity:.4;cursor:not-allowed}.ebook-reader-shell{--reader-bg:#f5f5f4;--reader-ink:#292524;background:var(--reader-bg);color:var(--reader-ink)}#ebook-epub-view{height:min(72vh,850px);min-height:420px;background:var(--reader-bg);touch-action:pan-y}#ebook-epub-view iframe{background:var(--reader-bg)}#ebook-pdf-view{max-height:72vh;min-height:320px}.reader-progress-track{height:4px;background:#e7e5e4;border-radius:999px;overflow:hidden}.reader-progress-fill{height:100%;width:0;background:#4f46e5;transition:width .2s}.ebook-reader-shell.sepia{--reader-bg:#f4ead5;--reader-ink:#433525}.ebook-reader-shell.sepia .reader-pagebar,.ebook-reader-shell.sepia #ebook-reader-toolbar{background:#f4ead5}.ebook-reader-shell.dark{--reader-bg:#202124;--reader-ink:#e8eaed}.ebook-reader-shell.dark .reader-pagebar,.ebook-reader-shell.dark #ebook-reader-toolbar{background:#292a2d;color:#e8eaed}.ebook-reader-shell.dark .reader-tool{background:#303134;color:#e8eaed;border-color:#5f6368}.ebook-reader-shell:fullscreen{background:var(--reader-bg);display:flex;flex-direction:column;padding:1rem}.ebook-reader-shell:fullscreen #ebook-epub-view{flex:1;height:auto;min-height:0}.ebook-reader-shell:fullscreen #ebook-pdf-view{flex:1;max-height:none}.ebook-reader-shell:fullscreen .reader-pagebar{margin-top:auto}@media(max-width:640px){#ebook-epub-view{height:68vh;min-height:360px}.reader-tool{padding:.5rem .65rem;font-size:.875rem}}</style>
+.reader-tool {
+  border: 1px solid #d6d3d1;
+  border-radius: .65rem;
+  padding: .55rem .85rem;
+  background: #fff;
+  color: #292524;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reader-tool:hover {
+  background: #f5f5f4;
+}
+
+.reader-tool:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.ebook-reader-shell {
+  --reader-bg: #f5f5f4;
+  --reader-ink: #292524;
+  width: 100%;
+  max-width: 100%;
+  background: var(--reader-bg);
+  color: var(--reader-ink);
+  overflow: hidden;
+}
+
+#ebook-reader-toolbar,
+.reader-pagebar {
+  background: var(--reader-bg);
+  color: var(--reader-ink);
+}
+
+#ebook-epub-view {
+  width: 100%;
+  height: 70vh;
+  min-height: 350px;
+  max-height: 760px;
+  overflow: hidden;
+  background: var(--reader-bg);
+  touch-action: pan-y;
+}
+
+#ebook-epub-view iframe {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0;
+  background: var(--reader-bg);
+}
+
+#ebook-pdf-view {
+  width: 100%;
+  height: 70vh;
+  min-height: 320px;
+  max-height: 760px;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+#ebook-page-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.reader-progress-track {
+  height: 4px;
+  background: #e7e5e4;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.reader-progress-fill {
+  height: 100%;
+  width: 0;
+  background: #4f46e5;
+  transition: width .2s;
+}
+
+.ebook-reader-shell.sepia {
+  --reader-bg: #f4ead5;
+  --reader-ink: #433525;
+}
+
+.ebook-reader-shell.dark {
+  --reader-bg: #202124;
+  --reader-ink: #e8eaed;
+}
+
+.ebook-reader-shell.dark #ebook-reader-toolbar,
+.ebook-reader-shell.dark .reader-pagebar {
+  background: #292a2d;
+  color: #e8eaed;
+}
+
+.ebook-reader-shell.dark .reader-tool {
+  background: #303134;
+  color: #e8eaed;
+  border-color: #5f6368;
+}
+
+.ebook-reader-shell:fullscreen {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 12px;
+  background: var(--reader-bg);
+}
+
+.ebook-reader-shell:fullscreen #ebook-epub-view,
+.ebook-reader-shell:fullscreen #ebook-pdf-view {
+  flex: 1;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+
+@media (max-width: 640px) {
+  #ebook-epub-view {
+    height: 65dvh;
+    min-height: 320px;
+    max-height: 650px;
+  }
+
+  #ebook-pdf-view {
+    height: 65dvh;
+    min-height: 300px;
+  }
+
+  .reader-tool {
+    padding: .5rem .65rem;
+    font-size: .875rem;
+  }
+}
+</style>
 
 </body>
 </html>
