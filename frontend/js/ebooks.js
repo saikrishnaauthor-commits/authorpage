@@ -205,15 +205,25 @@
     applyEpubTheme();
     await currentRendition.display();
     currentRendition.on('relocated', location => {
-      const percentage = location?.start?.percentage || 0;
-      $('ebook-progress').style.width = `${Math.max(0, Math.min(100, percentage * 100))}%`;
-      const cfi = location?.start?.cfi;
+      const start = location?.start;
+      const end = location?.end;
+      const percentage = start?.percentage || 0;
+      $('ebook-progress').style.width =  `${Math.max(0, Math.min(100, percentage * 100))}%`;
       $('ebook-page-count').textContent = `${Math.round(percentage * 100)}% read`;
-      $('ebook-prev-page').disabled = !location?.start || (location.start.percentage || 0) <= 0.001;
+      // Enable Previous when the reader is not at the beginning.
+      $('ebook-prev-page').disabled = !start?.cfi || percentage <= 0.001;
+      // Enable Next unless the reader is at the end.
       $('ebook-next-page').disabled = Boolean(location?.atEnd);
-      if (cfi) {
-        try { sessionStorage.setItem(`sksEbookProgress:${book.id}`, cfi); } catch {}
+      if (start?.cfi) {
+        try {
+          sessionStorage.setItem(`sksEbookProgress:${book.id}`, start.cfi);
+        } catch {}
       }
+    });
+
+
+
+      
     });
     const savedCfi = sessionStorage.getItem(`sksEbookProgress:${book.id}`);
     if (savedCfi) {
