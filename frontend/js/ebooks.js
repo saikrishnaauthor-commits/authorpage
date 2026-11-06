@@ -28,10 +28,14 @@
   const bookmarksKey = id => `sksReader:bookmarks:${id}`;
   const locationsKey = id => `sksReader:locations:${id}`;
 
+  // spread 'auto' = two pages side by side when the screen is wide enough.
+  const SPREAD_MIN_WIDTH = 1000;
   const prefs = Object.assign(
-    { theme: 'light', fontSize: 100, font: 'original', lineHeight: 'original', spread: 'single', pdfFit: 'width', pdfScale: null },
+    { theme: 'light', fontSize: 100, font: 'original', lineHeight: 'original', spread: 'auto', pageTurn: 'slide', pdfFit: 'width', pdfScale: null },
     store.get(PREFS_KEY, {})
   );
+  // Settings saved before v2 had one-page as the default; move them to the new default once.
+  if (prefs.v !== 2) { prefs.spread = 'auto'; prefs.v = 2; }
   const savePrefs = () => store.set(PREFS_KEY, prefs);
 
   /* ---------------- API ---------------- */
@@ -622,7 +626,7 @@
         height: '100%',
         flow: 'paginated',
         spread: prefs.spread === 'auto' ? 'auto' : 'none',
-        minSpreadWidth: 900,
+        minSpreadWidth: SPREAD_MIN_WIDTH,
         manager: 'default',
         allowScriptedContent: false
       });
@@ -782,10 +786,67 @@
       });
       rendition.on('keydown', event => Reader.handleKey(event));
 
+      // Two pages side by side when the setting allows it and the screen is wide
+      // enough; the class draws the fold shadow down the middle.
+      const markSpread = () => {
+        host.classList.toggle('is-spread', prefs.spread === 'auto' && host.clientWidth >= SPREAD_MIN_WIDTH);
+      };
+
+      // Page-turn motion: the page slides out to one side and the next one
+      // slides in from the other. Skipped when switched off in settings or when
+      // the device asks for reduced motion. Presses made during a slide are
+      // queued and applied straight after it (no animation), so fast readers
+      // never lose a turn and the library never runs two turns at once.
+      let turning = false;
+      let queued = 0;
+      const step = direction => (direction > 0 ? rendition.next() : rendition.prev());
+      const turn = async direction => {
+        if (turning) { queued += direction; return; }
+        const atEdge = direction > 0 ? current?.atEnd : current?.atStart;
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        turning = true;
+        try {
+          if (atEdge || prefs.pageTurn === 'none' || reduceMotion || !host.animate) await step(direction);
+          else await slide(direction);
+          while (queued && !destroyed) {
+            const d = Math.sign(queued);
+            queued -= d;
+            await step(d);
+          }
+        } finally {
+          queued = 0;
+          turning = false;
+        }
+      };
+      const slide = async direction => {
+        let moved = false;
+        const go = async () => { moved = true; await step(direction); };
+        const distance = Math.min(90, host.clientWidth * 0.06) * direction;
+        try {
+          await host.animate(
+            [{ transform: 'translateX(0)', opacity: 1 }, { transform: `translateX(${-distance}px)`, opacity: 0 }],
+            { duration: 130, easing: 'ease-in' }
+          ).finished;
+          host.style.opacity = '0';
+          await go();
+          host.style.opacity = '';
+          await host.animate(
+            [{ transform: `translateX(${distance}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }],
+            { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)' }
+          ).finished;
+        } catch {
+          // An interrupted animation must never leave the page hidden or unturned.
+          host.style.opacity = '';
+          if (!moved) await go();
+        } finally {
+          host.style.opacity = '';
+        }
+      };
+
       const engine = {
         kind: 'epub',
-        next: () => rendition.next(),
-        prev: () => rendition.prev(),
+        next: () => turn(1),
+        prev: () => turn(-1),
         goTo: target => rendition.display(target).catch(err => console.warn('Could not open that location', err)),
         seek: fraction => {
           if (!locationsReady) return;
@@ -803,7 +864,8 @@
         applyPrefs: async name => {
           if (destroyed) return;
           const cfi = current?.start?.cfi;
-          if (name === 'spread') rendition.spread(prefs.spread === 'auto' ? 'auto' : 'none', 900);
+          if (name === 'spread') { rendition.spread(prefs.spread === 'auto' ? 'auto' : 'none', SPREAD_MIN_WIDTH); markSpread(); }
+          if (name === 'pageTurn') return;
           rendition.getContents().forEach(inject);
           if (name !== 'theme' && cfi) {
             await new Promise(r => setTimeout(r, 60));
@@ -814,10 +876,12 @@
           if (destroyed) return;
           snapHostSize();
           rendition.resize();
+          markSpread();
         },
         destroy: () => {
           destroyed = true;
           host.removeAttribute('style');
+          host.classList.remove('is-spread');
           try { rendition.destroy(); } catch {}
           try { epub.destroy(); } catch {}
         }
@@ -847,6 +911,7 @@
         }).catch(err => console.warn('Could not calculate EPUB locations', err));
       }
 
+      markSpread();
       Reader.onEngineReady();
       return engine;
     }

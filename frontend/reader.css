@@ -234,6 +234,38 @@ body.reader-open { overflow: hidden; }
 
 .reader-epub iframe { background: transparent; }
 
+/* Two-page spread: a soft fold down the middle, like an open book. */
+.reader-epub.is-spread::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  left: 50%;
+  z-index: 1;
+  width: 56px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0, 0, 0, 0.035) 35%,
+    rgba(0, 0, 0, 0.09) 50%,
+    rgba(0, 0, 0, 0.035) 65%,
+    transparent);
+  pointer-events: none;
+}
+
+.reader[data-theme="dark"] .reader-epub.is-spread::after {
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0, 0, 0, 0.25) 35%,
+    rgba(0, 0, 0, 0.45) 50%,
+    rgba(0, 0, 0, 0.25) 65%,
+    transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-epub { animation: none !important; }
+}
+
 .reader-pdf {
   position: absolute;
   inset: 0;
@@ -521,7 +553,8 @@ body.reader-open { overflow: hidden; }
 .reader[data-format="epub"] [data-only="pdf"],
 .reader[data-format="pdf"] [data-only="epub"] { display: none; }
 
-@media (max-width: 899px) {
+/* Two pages need a reading area of at least 1000px (screen ~1150px wide). */
+@media (max-width: 1143px) {
   .r-setting--wide { display: none; }
 }
 
