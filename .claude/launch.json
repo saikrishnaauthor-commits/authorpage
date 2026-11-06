@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server@14.1.1", "frontend", "-p", "5173", "-c-1", "--silent"],
+      "port": 5173
+    }
+  ]
+}

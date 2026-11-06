@@ -1,262 +1,188 @@
 ﻿<!DOCTYPE html>
-
 <html lang="en" class="scroll-smooth">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Sai Krishna - Author Official Website</title>
-
-    <!-- Tailwind CSS CDN -->
-
+    <title>Sai Krishna Seelaboyina | Author Official Website</title>
+    <meta name="description" content="Official website of author Sai Krishna Seelaboyina. Buy KaalYug, Pages of Us and The Indestructible Kali in paperback or e-book, direct from the author.">
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Razorpay Checkout Script -->
-
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-  <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
+<body>
 
-<body class="bg-gray-50 text-gray-800 font-sans">
-
-
-
-    <!-- Header / Navbar -->
-
-    <header class="bg-white shadow-sm sticky top-0 z-40">
-
-        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
-
-            <a href="#" class="text-2xl font-bold text-indigo-700 tracking-tight">Sai Krishna | Author</a>
-
-            <nav class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-gray-600">
-
-                <a href="books.html" class="hover:text-indigo-600 transition">Books</a>
-
-                <a href="about.html" class="hover:text-indigo-600 transition">About Author</a>
-
-                <a href="reviews.html" class="hover:text-indigo-600 transition">Reviews</a>
-                <a href="ebooks.html" class="hover:text-indigo-600 transition">My E-books</a>
-                <a href="order-status.html" class="hover:text-indigo-600 transition">Order Status</a>
-
-            </nav>
-
-        </div>
-
-    </header>
-
-
-
-    <!-- Hero Section -->
-<section class="relative overflow-hidden bg-slate-950 text-white">
-    <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900"></div>
-    <div class="absolute -top-24 -right-20 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl"></div>
-    <div class="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-indigo-500/15 blur-3xl"></div>
-
-    <div class="relative max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-24 lg:py-28">
-        <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-
-            <div class="space-y-7">
-                <div class="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-white/5 px-4 py-2 text-xs sm:text-sm tracking-wide text-amber-200">
-                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                    THE OFFICIAL AUTHOR STORE
-                </div>
-
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
-                    Stories that stay with you.
-                    <span class="block mt-2 text-amber-300">Worlds beyond the ordinary.</span>
-                </h1>
-
-                <p class="max-w-xl text-base sm:text-lg leading-8 text-slate-300">
-                    Discover stories exploring mythology, philosophy, time and human relationships.
-                    Find your next read in Sai Krishna Seelaboyina's collection.
-                </p>
-
-                <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                    <a href="books.html"
-                       class="inline-flex justify-center items-center rounded-xl bg-amber-400 px-7 py-3.5 font-bold text-slate-950 shadow-lg transition hover:bg-amber-300">
-                        Explore the Books <span class="ml-2" aria-hidden="true">&rarr;</span>
-                    </a>
-                    <a href="ebooks.html"
-                       class="inline-flex justify-center items-center rounded-xl border border-white/25 bg-white/5 px-7 py-3.5 font-semibold text-white transition hover:bg-white/10">
-                        Read E-books
-                    </a>
-                </div>
-
-                <p class="text-sm text-slate-400">
-                    Browse the collection and choose the edition that suits you.
-                </p>
-            </div>
-
-            <div class="relative mx-auto w-full max-w-lg">
-                <div class="absolute -inset-4 rounded-3xl border border-amber-300/10 rotate-3"></div>
-
-                <div class="relative rounded-3xl border border-white/10 bg-white/[0.06] p-6 sm:p-9 shadow-2xl backdrop-blur-sm">
-                    <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">
-                        Explore the collection
-                    </p>
-
-                    <div class="mt-6 space-y-4">
-                        <a href="book-details.html?id=book_1_pb"
-                           class="group flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 transition hover:border-amber-300/50 hover:bg-slate-900">
-                            <div class="flex h-14 w-12 shrink-0 items-center justify-center rounded-lg border border-amber-300/40 bg-gradient-to-br from-amber-200/20 to-amber-700/10 text-xl font-serif text-amber-200">K</div>
-                            <div class="min-w-0 flex-1">
-                                <h2 class="font-semibold text-white">KaalYug</h2>
-                                <p class="mt-1 text-sm text-slate-400">Myth, time and ideas</p>
-                            </div>
-                            <span class="text-amber-300 transition group-hover:translate-x-1" aria-hidden="true">&rarr;</span>
-                        </a>
-
-                        <a href="book-details.html?id=book_2_pb"
-                           class="group flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 transition hover:border-amber-300/50 hover:bg-slate-900">
-                            <div class="flex h-14 w-12 shrink-0 items-center justify-center rounded-lg border border-rose-300/40 bg-gradient-to-br from-rose-200/20 to-rose-700/10 text-xl font-serif text-rose-200">P</div>
-                            <div class="min-w-0 flex-1">
-                                <h2 class="font-semibold text-white">Pages of Us</h2>
-                                <p class="mt-1 text-sm text-slate-400">Stories of human connection</p>
-                            </div>
-                            <span class="text-amber-300 transition group-hover:translate-x-1" aria-hidden="true">&rarr;</span>
-                        </a>
-
-                        <a href="book-details.html?id=book_3_pb"
-                           class="group flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 transition hover:border-amber-300/50 hover:bg-slate-900">
-                            <div class="flex h-14 w-12 shrink-0 items-center justify-center rounded-lg border border-indigo-300/40 bg-gradient-to-br from-indigo-200/20 to-indigo-700/10 text-xl font-serif text-indigo-200">K</div>
-                            <div class="min-w-0 flex-1">
-                                <h2 class="font-semibold text-white">The Indestructible Kali</h2>
-                                <p class="mt-1 text-sm text-slate-400">Discover the published collection</p>
-                            </div>
-                            <span class="text-amber-300 transition group-hover:translate-x-1" aria-hidden="true">&rarr;</span>
-                        </a>
-                    </div>
-
-                    <div class="mt-6 border-t border-white/10 pt-5 text-sm text-slate-400">
-                        Choose a title to explore available editions and details.
-                    </div>
-                </div>
-            </div>
-
-        </div>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a href="index.html" class="site-brand" aria-label="Sai Krishna, Author — home">
+            <span class="site-brand__mark" aria-hidden="true">SK</span>
+            <span class="site-brand__text">Sai Krishna<small>Author</small></span>
+        </a>
+        <button type="button" class="nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Open menu">☰</button>
+        <nav id="site-nav" class="site-nav" aria-label="Main">
+            <a href="index.html">Home</a>
+            <a href="books.html">Books</a>
+            <a href="about.html">About</a>
+            <a href="reviews.html">Reviews</a>
+            <a href="ebooks.html">My E-books</a>
+            <a href="order-status.html">Order Status</a>
+        </nav>
     </div>
-</section>
+</header>
 
-
-
-        <!-- Homepage Author Preview -->
-    <section class="bg-white py-20 px-4">
-        <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-10 items-center">
-            <div class="rounded-3xl bg-slate-950 p-8 md:p-12 text-white">
-                <p class="text-xs font-bold uppercase tracking-[0.3em] text-amber-300">The Mind Behind the Stories</p>
-                <h2 class="mt-4 text-3xl md:text-4xl font-bold">Meet Sai Krishna</h2>
-                <div class="mt-6 h-1 w-16 rounded bg-amber-400"></div>
-                <p class="mt-6 text-slate-300 leading-8">
-                    Explore a world of mythology, philosophy, time, and human connection through the author's writing.
+<main>
+    <!-- Hero -->
+    <section class="page-hero">
+        <div class="page-hero__inner grid items-center gap-14 lg:grid-cols-[1.05fr_1fr] lg:py-24">
+            <div>
+                <p class="eyebrow">The official author store</p>
+                <h1>Stories that stay with you. <span class="block mt-2 text-[#e7c27f]">Worlds beyond the ordinary.</span></h1>
+                <p class="lede">
+                    Techno-thrillers, myth and quiet human drama from Sai Krishna Seelaboyina —
+                    order paperbacks or read e-books online, straight from the author.
                 </p>
-                <a href="about.html" class="inline-flex mt-8 rounded-xl bg-amber-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-amber-300">
-                    Discover the Author &rarr;
-                </a>
+                <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+                    <a href="books.html" class="btn btn-gold">Explore the books <span aria-hidden="true">→</span></a>
+                    <a href="ebooks.html" class="btn btn-ghost-light">Read my e-books</a>
+                </div>
             </div>
-            <div class="space-y-5">
-                <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-600">More to Explore</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-slate-900">Find your next read.</h3>
-                <p class="leading-7 text-slate-600">
-                    Browse the complete collection, discover available editions, and find the story that speaks to you.
-                </p>
-                <div class="flex flex-wrap gap-3 pt-2">
-                    <a href="books.html" class="rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-700">Browse All Books</a>
-                    <a href="ebooks.html" class="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-900 transition hover:border-amber-500">Explore E-books</a>
+
+            <div class="relative mx-auto w-full max-w-md lg:max-w-lg">
+                <div class="grid grid-cols-3 items-end gap-3 sm:gap-5">
+                    <a href="book-details.html?id=book_2_pb" class="hero-cover-link translate-y-6">
+                        <img src="images/pages-of-us.png" alt="Pages of Us book cover" class="hero-cover">
+                    </a>
+                    <a href="book-details.html?id=book_1_pb" class="hero-cover-link">
+                        <img src="images/kaalyug.png" alt="KaalYug: Shadows of Dark Web book cover" class="hero-cover">
+                    </a>
+                    <a href="book-details.html?id=book_3_pb" class="hero-cover-link translate-y-6">
+                        <img src="images/kali.jpeg" alt="The Indestructible Kali book cover" class="hero-cover">
+                    </a>
                 </div>
             </div>
         </div>
     </section>
-    <!-- End Homepage Author Preview -->
-    <!-- Footer populated from admin settings -->
-    <div id="site-footer"></div>
 
+    <!-- Why buy here -->
+    <section class="border-b border-[#ebe6db] bg-white">
+        <div class="mx-auto grid max-w-[1240px] gap-6 px-5 py-8 text-sm sm:grid-cols-3">
+            <div class="flex items-start gap-3">
+                <span class="mt-0.5 text-lg text-[#a77a2d]" aria-hidden="true">✦</span>
+                <p><strong class="block text-[#101b35]">Paperback &amp; e-book</strong>Choose the edition that suits you.</p>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="mt-0.5 text-lg text-[#a77a2d]" aria-hidden="true">✦</span>
+                <p><strong class="block text-[#101b35]">Read e-books instantly</strong>Open your purchase online in the built-in reader.</p>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="mt-0.5 text-lg text-[#a77a2d]" aria-hidden="true">✦</span>
+                <p><strong class="block text-[#101b35]">Track every order</strong>Check delivery status any time with your order ID.</p>
+            </div>
+        </div>
+    </section>
 
+    <!-- Books -->
+    <section class="mx-auto max-w-[1240px] px-5 py-20">
+        <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+                <p class="eyebrow">The collection</p>
+                <h2 class="section-title mt-3">Find your next read</h2>
+            </div>
+            <a href="books.html" class="font-semibold text-[#101b35] underline decoration-[#d6ad60] decoration-2 underline-offset-8 hover:text-[#a77a2d]">See all books &amp; prices →</a>
+        </div>
 
-    
-<!-- External Cart & Store Logic Script -->
+        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <a href="book-details.html?id=book_1_pb" class="surface-card group flex flex-col overflow-hidden transition hover:-translate-y-1">
+                <div class="grid place-items-center bg-[#101b35] p-6"><img src="images/kaalyug.png" alt="" loading="lazy" class="h-56 object-contain drop-shadow-xl transition group-hover:scale-[1.03]"></div>
+                <div class="flex flex-1 flex-col p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-[#a77a2d]">Techno-thriller</p>
+                    <h3 class="mt-2 text-xl font-semibold text-[#101b35]">KaalYug: Shadows of Dark Web</h3>
+                    <p class="mt-2 flex-1 text-sm leading-6 text-slate-600">Cybercrime, digital-age governance and the battle between order and chaos.</p>
+                    <span class="mt-4 text-sm font-bold text-[#101b35]">View book →</span>
+                </div>
+            </a>
+            <a href="book-details.html?id=book_2_pb" class="surface-card group flex flex-col overflow-hidden transition hover:-translate-y-1">
+                <div class="grid place-items-center bg-[#101b35] p-6"><img src="images/pages-of-us.png" alt="" loading="lazy" class="h-56 object-contain drop-shadow-xl transition group-hover:scale-[1.03]"></div>
+                <div class="flex flex-1 flex-col p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-[#a77a2d]">Drama</p>
+                    <h3 class="mt-2 text-xl font-semibold text-[#101b35]">Pages of Us</h3>
+                    <p class="mt-2 flex-1 text-sm leading-6 text-slate-600">Where love ends, life begins — an intimate story of love, loss and relationships.</p>
+                    <span class="mt-4 text-sm font-bold text-[#101b35]">View book →</span>
+                </div>
+            </a>
+            <a href="book-details.html?id=book_3_pb" class="surface-card group flex flex-col overflow-hidden transition hover:-translate-y-1">
+                <div class="grid place-items-center bg-[#101b35] p-6"><img src="images/kali.jpeg" alt="" loading="lazy" class="h-56 object-contain drop-shadow-xl transition group-hover:scale-[1.03]"></div>
+                <div class="flex flex-1 flex-col p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-[#a77a2d]">Thriller</p>
+                    <h3 class="mt-2 text-xl font-semibold text-[#101b35]">The Indestructible Kali</h3>
+                    <p class="mt-2 flex-1 text-sm leading-6 text-slate-600">Ethics, technology and justice collide as the KaalYug universe expands.</p>
+                    <span class="mt-4 text-sm font-bold text-[#101b35]">View book →</span>
+                </div>
+            </a>
+            <div class="surface-card flex flex-col overflow-hidden border-dashed">
+                <div class="relative grid place-items-center bg-[#1c2c4e] p-6">
+                    <img src="images/From the Passenger Seat.png" alt="" loading="lazy" class="h-56 object-contain opacity-80 drop-shadow-xl">
+                    <span class="absolute right-3 top-3 rounded-full bg-[#d6ad60] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-[#101b35]">Coming soon</span>
+                </div>
+                <div class="flex flex-1 flex-col p-5">
+                    <p class="text-xs font-bold uppercase tracking-widest text-[#a77a2d]">Upcoming</p>
+                    <h3 class="mt-2 text-xl font-semibold text-[#101b35]">From the Passenger Seat</h3>
+                    <p class="mt-2 flex-1 text-sm leading-6 text-slate-600">The next book from Sai Krishna. Follow along for release news.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <script src="js/config.js"></script>
+    <!-- Author -->
+    <section class="bg-white">
+        <div class="mx-auto grid max-w-[1240px] items-center gap-12 px-5 py-20 md:grid-cols-[minmax(0,420px)_1fr]">
+            <img src="images/author.jpg" alt="Sai Krishna Seelaboyina" loading="lazy" class="mx-auto aspect-[4/5] w-full max-w-sm rounded-3xl object-cover object-top shadow-2xl md:max-w-none">
+            <div>
+                <p class="eyebrow">The mind behind the stories</p>
+                <h2 class="section-title mt-3">Meet Sai Krishna</h2>
+                <p class="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+                    An NIT Warangal alumnus and electrical engineer with APTRANSCO, Sai Krishna writes stories
+                    that bridge analytical precision and deep human emotion — from high-stakes techno-thrillers
+                    to quiet, soul-touching drama.
+                </p>
+                <blockquote class="mt-8 border-l-4 border-[#d6ad60] pl-5 text-2xl font-display italic leading-snug text-[#101b35]">
+                    Stories are not merely meant to be told, but deeply felt.
+                </blockquote>
+                <a href="about.html" class="btn btn-navy mt-9">Read the full story →</a>
+            </div>
+        </div>
+    </section>
 
+    <!-- Review teaser -->
+    <section class="mx-auto max-w-[1240px] px-5 py-20 text-center">
+        <p class="eyebrow">From readers</p>
+        <blockquote class="mx-auto mt-6 max-w-3xl font-display text-2xl leading-snug text-[#101b35] sm:text-3xl">
+            “KaalYug completely shifts your perspective on time and destiny. A gripping page-turner.”
+        </blockquote>
+        <p class="mt-5 text-sm font-semibold text-slate-500">A. R. Sharma, Verified Reader</p>
+        <a href="reviews.html" class="btn btn-outline mt-8">Read more reviews</a>
+    </section>
 
+    <!-- Reader help -->
+    <section class="px-5 pb-20">
+        <div class="page-hero mx-auto max-w-[1240px] rounded-3xl">
+            <div class="flex flex-col items-start justify-between gap-6 p-8 sm:p-12 md:flex-row md:items-center">
+                <div>
+                    <h2 class="text-2xl font-semibold text-white sm:text-3xl">Already bought a book?</h2>
+                    <p class="mt-2 text-[#b9c2d4]">Open your e-books or check where your paperback is.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="ebooks.html" class="btn btn-gold">My E-books</a>
+                    <a href="order-status.html" class="btn btn-ghost-light">Track an order</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
 
-
-
-
-
-
-
-
-
-<div id="order-success-modal"
-     class="fixed inset-0 z-[100] bg-black/70 hidden items-center justify-center p-4"
-     role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
-  <div class="bg-white w-full max-w-md rounded-2xl p-8 text-center shadow-2xl">
-    <h2 id="order-modal-title" class="text-2xl font-bold text-gray-900"> Payment Received — Confirmation Pending</h2>
-    <h2 id="order-modal-title" class="text-2xl font-bold text-gray-900">
-      Payment Received ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Confirmation Pending
-    </h2>
-    <p id="order-modal-message" class="text-gray-600 mt-3" aria-live="polite">
-      Please wait while we verify your payment. Please do not pay again.
-    </p>
-    <div id="order-pending-spinner"
-         class="mx-auto mt-5 h-10 w-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin"
-         role="status" aria-label="Verifying payment"></div>
-    <div class="bg-gray-50 border rounded-xl p-4 mt-6">
-
-      <p class="text-sm text-gray-500">Your Order ID</p>
-
-      <p id="confirmed-order-id"
-
-         class="text-lg font-bold text-indigo-700 mt-1 break-all"></p>
-
-
-
-      <button type="button"
-
-              onclick="copyOrderId()"
-
-              class="mt-3 px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-
-        Copy Order ID
-
-      </button>
-
-      <p id="copy-order-status" class="text-sm mt-2" aria-live="polite"></p>
-
-    </div>
-
-
-
-    <p id="confirmation-email-status" class="text-sm text-gray-600 mt-4"></p>
-
-
-
-    <button type="button"
-
-            onclick="closeOrderSuccess()"
-
-            class="mt-6 w-full bg-gray-900 text-white py-3 rounded-lg">
-
-      Continue Browsing
-
-    </button>
-
-  </div>
-
-</div>
-
-    <script src="js/footer.js"></script>
+<div id="site-footer"></div>
+<script src="js/nav.js"></script>
+<script src="js/footer.js"></script>
 </body>
-
 </html>
-
-
-
-
-
-

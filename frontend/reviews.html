@@ -3,73 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reader Reviews | Sai Krishna</title>
+    <title>Reader Reviews | Sai Krishna Seelaboyina</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body>
 
-    <header class="bg-white shadow-sm sticky top-0 z-40">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
-            <a href="index.html" class="text-2xl font-bold text-indigo-700">
-                Sai Krishna | Author
-            </a>
-            <nav class="flex flex-wrap gap-4 font-medium text-gray-600">
-                <a href="index.html">Home</a>
-                <a href="books.html">Books</a>
-                <a href="about.html">About Author</a>
-                <a href="reviews.html">Reviews</a>
-                <a href="ebooks.html">My E-books</a>
-                <a href="order-status.html">Order Status</a>
-            </nav>
-        </div>
-    </header>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a href="index.html" class="site-brand" aria-label="Sai Krishna, Author — home">
+            <span class="site-brand__mark" aria-hidden="true">SK</span>
+            <span class="site-brand__text">Sai Krishna<small>Author</small></span>
+        </a>
+        <button type="button" class="nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Open menu">☰</button>
+        <nav id="site-nav" class="site-nav" aria-label="Main">
+            <a href="index.html">Home</a>
+            <a href="books.html">Books</a>
+            <a href="about.html">About</a>
+            <a href="reviews.html">Reviews</a>
+            <a href="ebooks.html">My E-books</a>
+            <a href="order-status.html">Order Status</a>
+        </nav>
+    </div>
+</header>
 
-    <section id="reviews" class="max-w-6xl mx-auto px-4 py-16">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-gray-900">Reader Reviews</h2>
-            <p class="text-gray-600 mt-2">
-                What readers are saying about these titles.
-            </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-3">
-                <div class="text-yellow-400 text-lg">★★★★★</div>
-                <p class="text-gray-700 italic">
-                    "KaalYug completely shifts your perspective on time and destiny. A gripping page-turner."
-                </p>
-                <p class="text-xs font-semibold text-gray-500">
-                    — A. R. Sharma, Verified Reader
-                </p>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-3">
-                <div class="text-yellow-400 text-lg">★★★★★</div>
-                <p class="text-gray-700 italic">
-                    "Pages of Us captures raw emotion and human connection so beautifully."
-                </p>
-                <p class="text-xs font-semibold text-gray-500">
-                    — Priya Menon, Book Reviewer
-                </p>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-3">
-                <div class="text-yellow-400 text-lg">★★★★★</div>
-                <p class="text-gray-700 italic">
-                    "The Indestructible Kali is a masterpiece of energy and myth. Highly recommended."
-                </p>
-                <p class="text-xs font-semibold text-gray-500">
-                    — Karthik V., Verified Reader
-                </p>
-            </div>
-
+<main>
+    <section class="page-hero page-hero--center">
+        <div class="page-hero__inner">
+            <p class="eyebrow">Reader reviews</p>
+            <h1>What readers are saying</h1>
+            <p class="lede">Thoughts from readers on KaalYug, Pages of Us and The Indestructible Kali.</p>
+            <a href="#write-review" class="btn btn-gold mt-8">Write a review</a>
         </div>
     </section>
-    <!-- Footer populated from admin settings -->
-    <div id="site-footer"></div>
 
-    <script src="js/footer.js"></script>
+    <section id="reviews" class="mx-auto max-w-[1240px] px-5 pb-16">
+        <div class="page-overlap grid gap-6 md:grid-cols-3">
+            <figure class="surface-card review-card">
+                <span class="review-tag">KaalYug</span>
+                <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
+                <blockquote>“KaalYug completely shifts your perspective on time and destiny. A gripping page-turner.”</blockquote>
+                <figcaption class="border-t border-[#efeae0] pt-4 text-sm">
+                    <span class="block font-semibold text-[#101b35]">A. R. Sharma</span>
+                    <span class="text-slate-500">Verified Reader</span>
+                </figcaption>
+            </figure>
+
+            <figure class="surface-card review-card">
+                <span class="review-tag">Pages of Us</span>
+                <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
+                <blockquote>“Pages of Us captures raw emotion and human connection so beautifully.”</blockquote>
+                <figcaption class="border-t border-[#efeae0] pt-4 text-sm">
+                    <span class="block font-semibold text-[#101b35]">Priya Menon</span>
+                    <span class="text-slate-500">Book Reviewer</span>
+                </figcaption>
+            </figure>
+
+            <figure class="surface-card review-card">
+                <span class="review-tag">The Indestructible Kali</span>
+                <div class="review-stars" role="img" aria-label="5 out of 5 stars">★★★★★</div>
+                <blockquote>“The Indestructible Kali is a masterpiece of energy and myth. Highly recommended.”</blockquote>
+                <figcaption class="border-t border-[#efeae0] pt-4 text-sm">
+                    <span class="block font-semibold text-[#101b35]">Karthik V.</span>
+                    <span class="text-slate-500">Verified Reader</span>
+                </figcaption>
+            </figure>
+        </div>
+
+        <div id="latest-reviews" class="mt-16 hidden">
+            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                <div>
+                    <p class="eyebrow">Latest from readers</p>
+                    <h2 class="section-title mt-3">Recent reviews</h2>
+                </div>
+                <p id="reviews-summary" class="text-sm font-semibold text-slate-600"></p>
+            </div>
+            <div id="reviews-list" class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3"></div>
+            <button id="reviews-more" type="button" class="btn btn-outline mx-auto mt-8 hidden">Show more reviews</button>
+        </div>
+    </section>
+
+    <section id="write-review" class="scroll-mt-24 bg-white">
+        <div class="mx-auto grid max-w-[1240px] gap-12 px-5 py-20 lg:grid-cols-[1fr_1.3fr]">
+            <div>
+                <p class="eyebrow">Share your thoughts</p>
+                <h2 class="section-title mt-3">Write a review</h2>
+                <p class="mt-5 max-w-md leading-7 text-slate-600">
+                    Read one of the books? Tell other readers what you thought. Reviews are checked before they appear on the site.
+                </p>
+                <ul class="mt-8 space-y-3 text-sm text-slate-600">
+                    <li class="flex gap-3"><span class="text-[#a77a2d]" aria-hidden="true">✦</span><span>Add your order number and checkout email to get a <strong class="text-[#101b35]">Verified purchase</strong> badge.</span></li>
+                    <li class="flex gap-3"><span class="text-[#a77a2d]" aria-hidden="true">✦</span><span>Only your name and review are shown — never your email or order number.</span></li>
+                    <li class="flex gap-3"><span class="text-[#a77a2d]" aria-hidden="true">✦</span><span>Please avoid spoilers so others can enjoy the story.</span></li>
+                </ul>
+            </div>
+
+            <form id="review-form" class="form-card space-y-5">
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div>
+                        <label for="review-book" class="form-label">Book</label>
+                        <select id="review-book" name="bookId" required class="form-input">
+                            <option value="">Loading books…</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="review-name" class="form-label">Your name</label>
+                        <input id="review-name" name="name" required minlength="2" maxlength="60" autocomplete="name" placeholder="e.g. Priya M." class="form-input">
+                    </div>
+                </div>
+
+                <fieldset>
+                    <legend class="form-label">Your rating</legend>
+                    <div class="star-input">
+                        <input type="radio" id="star5" name="rating" value="5" required><label for="star5" title="5 stars"><span class="sr-only">5 stars</span>★</label>
+                        <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars"><span class="sr-only">4 stars</span>★</label>
+                        <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars"><span class="sr-only">3 stars</span>★</label>
+                        <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars"><span class="sr-only">2 stars</span>★</label>
+                        <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star"><span class="sr-only">1 star</span>★</label>
+                    </div>
+                </fieldset>
+
+                <div>
+                    <label for="review-title" class="form-label">Headline <span class="font-normal text-slate-400">(optional)</span></label>
+                    <input id="review-title" name="title" maxlength="100" placeholder="Sum it up in a few words" class="form-input">
+                </div>
+
+                <div>
+                    <label for="review-text" class="form-label">Your review</label>
+                    <textarea id="review-text" name="text" required minlength="20" maxlength="2000" rows="5" placeholder="What did you enjoy? Who would you recommend it to?" class="form-input"></textarea>
+                    <p id="review-count" class="mt-1 text-right text-xs text-slate-400">0 / 2000</p>
+                </div>
+
+                <details class="rounded-xl border border-[#ebe6db] bg-[#fbfaf7] p-4">
+                    <summary class="cursor-pointer text-sm font-semibold text-[#101b35]">Bought it here? Verify your purchase <span class="font-normal text-slate-500">(optional)</span></summary>
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="review-order" class="form-label">Order number</label>
+                            <input id="review-order" name="orderNumber" autocomplete="off" placeholder="SKS-…" class="form-input">
+                        </div>
+                        <div>
+                            <label for="review-email" class="form-label">Checkout email</label>
+                            <input id="review-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" class="form-input">
+                        </div>
+                    </div>
+                </details>
+
+                <div class="hidden" aria-hidden="true">
+                    <label for="review-website">Leave this empty</label>
+                    <input id="review-website" name="website" tabindex="-1" autocomplete="off">
+                </div>
+
+                <button id="review-submit" type="submit" class="btn btn-navy w-full">Submit review</button>
+                <p id="review-message" class="text-sm" role="status" aria-live="polite"></p>
+            </form>
+        </div>
+    </section>
+</main>
+
+<div id="site-footer"></div>
+<script src="js/config.js"></script>
+<script src="js/reviews-config.js"></script>
+<script src="js/reviews.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/footer.js"></script>
 </body>
 </html>

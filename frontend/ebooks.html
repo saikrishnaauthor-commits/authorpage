@@ -5,287 +5,219 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My E-books | Sai Krishna Author Store</title>
 <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="reader.css">
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
-<header class="bg-white shadow-sm sticky top-0 z-40">
-<div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
-<a href="index.html" class="text-2xl font-bold text-indigo-700">Sai Krishna | Author</a>
-<nav class="flex flex-wrap gap-4 font-medium text-gray-600">
-<a href="index.html">Home</a>
-<a href="books.html">Books</a>
-<a href="about.html">About Author</a>
-<a href="reviews.html">Reviews</a>
-<a href="ebooks.html">My E-books</a>
-<a href="order-status.html">Order Status</a>
-</nav>
-</div>
-</header>
-<section id="my-ebooks" class="py-16 px-4 bg-white">
-  <div class="max-w-3xl mx-auto">
-    <div class="text-center mb-8">
-      <p class="text-sm font-semibold tracking-widest text-indigo-600">YOUR LIBRARY</p>
-      <h2 class="text-3xl font-bold text-gray-900 mt-2">My E-books</h2>
-      <p class="text-gray-600 mt-3">
-        Enter your order ID and purchase email to access the e-books linked to your completed purchase.
-      </p>
+<body>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a href="index.html" class="site-brand" aria-label="Sai Krishna, Author — home">
+            <span class="site-brand__mark" aria-hidden="true">SK</span>
+            <span class="site-brand__text">Sai Krishna<small>Author</small></span>
+        </a>
+        <button type="button" class="nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Open menu">☰</button>
+        <nav id="site-nav" class="site-nav" aria-label="Main">
+            <a href="index.html">Home</a>
+            <a href="books.html">Books</a>
+            <a href="about.html">About</a>
+            <a href="reviews.html">Reviews</a>
+            <a href="ebooks.html">My E-books</a>
+            <a href="order-status.html">Order Status</a>
+        </nav>
     </div>
+</header>
+<section class="page-hero page-hero--center">
+  <div class="page-hero__inner">
+    <p class="eyebrow">Your library</p>
+    <h1>My E-books</h1>
+    <p class="lede">Enter your order ID and purchase email to open the e-books from your completed purchase.</p>
+  </div>
+</section>
+<section id="my-ebooks" class="px-5 pb-20">
+  <div class="mx-auto max-w-4xl">
 
-    <div id="ebook-login-panel" class="max-w-xl mx-auto">
+    <div id="ebook-login-panel" class="page-overlap mx-auto max-w-xl">
       <form id="ebook-email-form" class="space-y-5">
         <div>
-          <label for="ebook-order-id" class="block text-sm font-medium text-gray-700 mb-2">
-            Order ID
-          </label>
-          <input
-            type="text"
-            id="ebook-order-id"
-            name="orderNumber"
-            placeholder="Enter your order ID"
-            required
-            autocomplete="off"
-            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
-          />
+          <label for="ebook-order-id" class="form-label">Order ID</label>
+          <input type="text" id="ebook-order-id" name="orderNumber" placeholder="e.g. SKS-20261013-AB12CD34"
+                 required autocomplete="off" class="form-input">
         </div>
-
         <div>
-          <label for="ebook-email" class="block text-sm font-medium text-gray-700 mb-2">
-            Purchase email
-          </label>
-          <input
-            type="email"
-            id="ebook-email"
-            name="email"
-            placeholder="Enter the email used at checkout"
-            required
-            autocomplete="email"
-            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
-          />
+          <label for="ebook-email" class="form-label">Purchase email</label>
+          <input type="email" id="ebook-email" name="email" placeholder="The email used at checkout"
+                 required autocomplete="email" class="form-input">
         </div>
-
-        <button
-          type="submit"
-          id="ebook-login-button"
-          class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-semibold rounded-lg px-4 py-3"
-        >
-          Log in to my e-books
-        </button>
-
+        <button type="submit" id="ebook-login-button" class="btn btn-navy w-full">Open my library</button>
         <p id="ebook-login-message" class="text-sm" aria-live="polite"></p>
       </form>
-
     </div>
 
-    <div id="ebook-library-panel" class="hidden mt-8">
-      <div class="flex items-center justify-between gap-4 mb-5">
-        <p class="text-sm text-gray-600">
-          Signed in as <span id="ebook-signed-in-email"></span>
-        </p>
-        <button id="ebook-logout" type="button"
-          class="text-indigo-700 font-medium hover:underline">
-          Log out
-        </button>
-      </div>
-
-      <div id="ebook-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      <p id="ebook-empty" class="hidden text-gray-600 text-center py-6">
-        No purchased e-books were found for this order.
-      </p>
-    </div>
-
-    <div id="ebook-reader-panel" class="hidden mt-8">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h3 id="ebook-reader-title" class="text-xl font-bold"></h3>
-        <button id="ebook-close-reader" type="button"
-          class="text-indigo-700 font-medium hover:underline">
-          Back to library
-        </button>
-      </div>
-
-      <p id="ebook-reader-message" class="hidden text-red-600 mb-3"></p>
-
-      <div id="ebook-reader-shell" class="ebook-reader-shell border rounded-2xl overflow-hidden bg-stone-100 shadow-inner">
-        <div id="ebook-reader-toolbar" class="ebook-reader-toolbar flex flex-wrap items-center justify-between gap-2 p-3 border-b bg-white">
-          <div class="flex flex-wrap items-center gap-2">
-            <button id="ebook-zoom-out" type="button" class="reader-tool" aria-label="Decrease text size">A−</button>
-            <button id="ebook-zoom-in" type="button" class="reader-tool" aria-label="Increase text size">A+</button>
-            <button id="ebook-theme-toggle" type="button" class="reader-tool">Sepia mode</button>
+    <div id="ebook-library-panel" class="page-overlap hidden">
+      <div class="form-card">
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#efeae0] pb-5">
+          <div>
+            <h2 class="text-2xl font-semibold text-[#101b35]">Your books</h2>
+            <p class="mt-1 text-sm text-slate-500">Signed in as <span id="ebook-signed-in-email" class="font-semibold text-slate-700"></span></p>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button id="ebook-fullscreen" type="button" class="reader-tool">Full screen</button>
-            <button id="ebook-fit" type="button" class="reader-tool">Fit screen</button>
-          </div>
+          <button id="ebook-logout" type="button" class="btn btn-outline !px-4 !py-2 text-sm">Log out</button>
         </div>
-        <div id="ebook-epub-view" class="hidden w-full" aria-label="E-book reading area"></div>
-        <div id="ebook-pdf-view" class="hidden overflow-auto p-3 text-center">
-          <canvas id="ebook-page-canvas" class="mx-auto max-w-full"></canvas>
-        </div>
-        <div class="reader-pagebar flex items-center justify-between gap-3 p-3 bg-white border-t">
-          <button id="ebook-prev-page" type="button" class="reader-tool">‹ Previous</button>
-          <div class="flex-1 text-center min-w-0">
-            <p id="ebook-page-count" class="text-sm text-gray-600" aria-live="polite">Opening book…</p>
-            <div class="reader-progress-track mt-2"><div id="ebook-progress" class="reader-progress-fill"></div></div>
-          </div>
-          <button id="ebook-next-page" type="button" class="reader-tool">Next ›</button>
-        </div>
+        <div id="ebook-list" class="grid gap-5 sm:grid-cols-2"></div>
+        <p id="ebook-empty" class="hidden py-6 text-center text-slate-600">No purchased e-books were found for this order.</p>
+        <p class="mt-6 text-center text-xs text-slate-500">Your reading position, bookmarks and display settings are saved on this device.</p>
       </div>
-      <p class="mt-3 text-xs text-gray-500 text-center">Tip: swipe left/right on mobile or use the arrow keys to turn pages. Text size adjusts automatically to your screen.</p>
     </div>
   </div>
 </section>
-    
+
+<!-- Full-screen reader -->
+<div id="reader" class="reader" data-theme="light" hidden role="dialog" aria-modal="true" aria-labelledby="reader-title">
+  <header class="reader-bar reader-top">
+    <button id="reader-close" type="button" class="r-btn" aria-label="Back to library">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span class="r-label">Library</span>
+    </button>
+    <div class="reader-heading">
+      <p id="reader-title" class="reader-title"></p>
+      <p id="reader-chapter" class="reader-chapter"></p>
+    </div>
+    <div class="reader-actions">
+      <button id="reader-toc-btn" type="button" class="r-btn" aria-label="Contents and bookmarks" aria-expanded="false" aria-controls="reader-drawer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      </button>
+      <button id="reader-bookmark-btn" type="button" class="r-btn" aria-label="Bookmark this page" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>
+      </button>
+      <button id="reader-settings-btn" type="button" class="r-btn r-btn--text" aria-label="Display settings" aria-expanded="false" aria-controls="reader-settings">Aa</button>
+      <button id="reader-fullscreen-btn" type="button" class="r-btn" aria-label="Full screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="reader-stage" id="reader-stage">
+    <button id="reader-prev" type="button" class="reader-side reader-side--prev" aria-label="Previous page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div id="reader-epub" class="reader-epub" hidden aria-label="Book text"></div>
+    <div id="reader-pdf" class="reader-pdf" hidden tabindex="0" aria-label="Book pages"></div>
+    <button id="reader-next" type="button" class="reader-side reader-side--next" aria-label="Next page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+
+    <div id="reader-loading" class="reader-loading" hidden>
+      <div class="reader-spinner" aria-hidden="true"></div>
+      <p id="reader-loading-text" role="status">Opening book…</p>
+    </div>
+    <div id="reader-error" class="reader-error" hidden>
+      <p class="reader-error__title">This book couldn't be opened</p>
+      <p id="reader-error-text"></p>
+      <button id="reader-error-close" type="button" class="btn btn-navy">Back to library</button>
+    </div>
+
+    <!-- Contents & bookmarks -->
+    <div id="reader-scrim" class="reader-scrim" hidden></div>
+    <aside id="reader-drawer" class="reader-drawer" hidden aria-label="Contents and bookmarks">
+      <div class="reader-tabs" role="tablist">
+        <button type="button" role="tab" id="tab-contents" aria-selected="true" aria-controls="panel-contents">Contents</button>
+        <button type="button" role="tab" id="tab-bookmarks" aria-selected="false" aria-controls="panel-bookmarks">Bookmarks</button>
+      </div>
+      <div id="panel-contents" role="tabpanel" aria-labelledby="tab-contents">
+        <ol id="reader-toc" class="reader-list"></ol>
+      </div>
+      <div id="panel-bookmarks" role="tabpanel" aria-labelledby="tab-bookmarks" hidden>
+        <ol id="reader-bookmarks" class="reader-list"></ol>
+        <p id="reader-bookmarks-empty" class="reader-empty">No bookmarks yet. Tap the bookmark icon at the top to save your place.</p>
+      </div>
+    </aside>
+
+    <!-- Display settings -->
+    <div id="reader-settings" class="reader-popover" hidden aria-label="Display settings">
+      <div class="r-setting">
+        <p class="r-setting__label">Theme</p>
+        <div class="r-seg r-themes">
+          <button type="button" data-theme-option="light" class="r-swatch r-swatch--light">Light</button>
+          <button type="button" data-theme-option="sepia" class="r-swatch r-swatch--sepia">Sepia</button>
+          <button type="button" data-theme-option="dark" class="r-swatch r-swatch--dark">Dark</button>
+        </div>
+      </div>
+
+      <div class="r-setting" data-only="epub">
+        <p class="r-setting__label">Text size</p>
+        <div class="r-stepper">
+          <button type="button" id="reader-font-down" aria-label="Smaller text">A−</button>
+          <span id="reader-font-value">100%</span>
+          <button type="button" id="reader-font-up" aria-label="Larger text">A+</button>
+        </div>
+      </div>
+      <div class="r-setting" data-only="epub">
+        <p class="r-setting__label">Font</p>
+        <div class="r-seg" data-pref="font">
+          <button type="button" data-value="original">Original</button>
+          <button type="button" data-value="serif" class="font-serif">Serif</button>
+          <button type="button" data-value="sans" class="font-sans">Sans</button>
+        </div>
+      </div>
+      <div class="r-setting" data-only="epub">
+        <p class="r-setting__label">Line spacing</p>
+        <div class="r-seg" data-pref="lineHeight">
+          <button type="button" data-value="original">Original</button>
+          <button type="button" data-value="normal">Comfortable</button>
+          <button type="button" data-value="relaxed">Relaxed</button>
+        </div>
+      </div>
+      <div class="r-setting r-setting--wide" data-only="epub">
+        <p class="r-setting__label">Layout</p>
+        <div class="r-seg" data-pref="spread">
+          <button type="button" data-value="single">One page</button>
+          <button type="button" data-value="auto">Two pages</button>
+        </div>
+      </div>
+
+      <div class="r-setting" data-only="pdf">
+        <p class="r-setting__label">Zoom</p>
+        <div class="r-stepper">
+          <button type="button" id="reader-zoom-out" aria-label="Zoom out">−</button>
+          <span id="reader-zoom-value">100%</span>
+          <button type="button" id="reader-zoom-in" aria-label="Zoom in">+</button>
+        </div>
+        <div class="r-seg mt-2" data-pref="pdfFit">
+          <button type="button" data-value="width">Fit width</button>
+          <button type="button" data-value="page">Fit page</button>
+        </div>
+      </div>
+      <div class="r-setting" data-only="pdf">
+        <p class="r-setting__label">Go to page</p>
+        <form id="reader-goto" class="r-goto">
+          <input id="reader-goto-input" type="number" min="1" inputmode="numeric" aria-label="Page number">
+          <button type="submit">Go</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="reader-bar reader-bottom">
+    <input id="reader-slider" type="range" min="0" max="1000" step="1" value="0" aria-label="Reading position">
+    <div class="reader-status">
+      <span id="reader-position" aria-live="polite"></span>
+      <span id="reader-percent"></span>
+    </div>
+  </footer>
+</div>
+
 <!-- PDF reader -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
 <!-- ZIP dependency required by the EPUB reader -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
 <!-- EPUB reader -->
 <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
 
+<script src="js/config.js"></script>
 <script src="js/ebooks.js"></script>
-
-<style>
-.reader-tool {
-  border: 1px solid #d6d3d1;
-  border-radius: .65rem;
-  padding: .55rem .85rem;
-  background: #fff;
-  color: #292524;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.reader-tool:hover {
-  background: #f5f5f4;
-}
-
-.reader-tool:disabled {
-  opacity: .4;
-  cursor: not-allowed;
-}
-
-.ebook-reader-shell {
-  --reader-bg: #f5f5f4;
-  --reader-ink: #292524;
-  width: 100%;
-  max-width: 100%;
-  background: var(--reader-bg);
-  color: var(--reader-ink);
-  overflow: hidden;
-}
-
-#ebook-reader-toolbar,
-.reader-pagebar {
-  background: var(--reader-bg);
-  color: var(--reader-ink);
-}
-
-#ebook-epub-view {
-  width: 100%;
-  height: 70vh;
-  min-height: 350px;
-  max-height: 760px;
-  overflow: hidden;
-  background: var(--reader-bg);
-  touch-action: pan-y;
-}
-
-#ebook-epub-view iframe {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-  border: 0;
-  background: var(--reader-bg);
-}
-
-#ebook-pdf-view {
-  width: 100%;
-  height: 70vh;
-  min-height: 320px;
-  max-height: 760px;
-  overflow: auto;
-  box-sizing: border-box;
-}
-
-#ebook-page-canvas {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  margin: 0 auto;
-}
-
-.reader-progress-track {
-  height: 4px;
-  background: #e7e5e4;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.reader-progress-fill {
-  height: 100%;
-  width: 0;
-  background: #4f46e5;
-  transition: width .2s;
-}
-
-.ebook-reader-shell.sepia {
-  --reader-bg: #f4ead5;
-  --reader-ink: #433525;
-}
-
-.ebook-reader-shell.dark {
-  --reader-bg: #202124;
-  --reader-ink: #e8eaed;
-}
-
-.ebook-reader-shell.dark #ebook-reader-toolbar,
-.ebook-reader-shell.dark .reader-pagebar {
-  background: #292a2d;
-  color: #e8eaed;
-}
-
-.ebook-reader-shell.dark .reader-tool {
-  background: #303134;
-  color: #e8eaed;
-  border-color: #5f6368;
-}
-
-.ebook-reader-shell:fullscreen {
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  padding: 12px;
-  background: var(--reader-bg);
-}
-
-.ebook-reader-shell:fullscreen #ebook-epub-view,
-.ebook-reader-shell:fullscreen #ebook-pdf-view {
-  flex: 1;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  max-height: none;
-}
-
-@media (max-width: 640px) {
-  #ebook-epub-view {
-    height: 65dvh;
-    min-height: 320px;
-    max-height: 650px;
-  }
-
-  #ebook-pdf-view {
-    height: 65dvh;
-    min-height: 300px;
-  }
-
-  .reader-tool {
-    padding: .5rem .65rem;
-    font-size: .875rem;
-  }
-}
-</style>
-
+<div id="site-footer"></div>
+<script src="js/nav.js"></script>
+<script src="js/footer.js"></script>
 </body>
 </html>

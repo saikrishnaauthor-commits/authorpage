@@ -1,5 +1,4 @@
 // Checkout flow: close/reset the cart and show a dedicated Order ID confirmation modal.
-a
 async function checkout() {
     if (checkoutInProgress) return;
 
