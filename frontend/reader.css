@@ -100,6 +100,9 @@
   inset: 0;
   z-index: 200;
   display: grid;
+  /* minmax(0, 1fr): a long chapter title must shrink (ellipsis), not widen the
+     whole reader past the screen and push the page edge off the right side. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   color: var(--r-fg);
   background: var(--r-bg);
@@ -136,6 +139,7 @@ body.reader-open { overflow: hidden; }
 
 .reader-bar {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 10px;
   padding: 8px 12px;

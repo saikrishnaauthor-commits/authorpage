@@ -599,6 +599,23 @@
       if (!window.ePub) throw new Error('The EPUB reader did not load. Refresh the page and try again.');
       const host = $('reader-epub');
       host.hidden = false;
+      // Page turns move by a whole number of pixels. If the reading area is a
+      // fractional width (e.g. 377.2px on some phones) every turn falls short by
+      // the fraction and long chapters drift sideways, clipping text. Snap the
+      // area to whole pixels (CSS insets decide the space, we round it down).
+      const snapHostSize = () => {
+        host.style.width = '';
+        host.style.height = '';
+        host.style.right = '';
+        host.style.bottom = '';
+        const rect = host.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        host.style.right = 'auto';
+        host.style.bottom = 'auto';
+        host.style.width = `${Math.floor(rect.width)}px`;
+        host.style.height = `${Math.floor(rect.height)}px`;
+      };
+      snapHostSize();
       const epub = window.ePub(bytes);
       const rendition = epub.renderTo(host, {
         width: '100%',
@@ -619,7 +636,16 @@
 
       const css = () => {
         const t = EPUB_THEMES[prefs.theme] || EPUB_THEMES.light;
-        let out = `html, body { background: ${t.bg} !important; color: ${t.fg} !important; }
+        // Layout guards: some books (e.g. exported from Word or Google Docs) size
+        // blocks to the screen (width: 100vw / large min-width) or make <body> a
+        // flex/grid box. Either breaks page columns: lines run across pages or text
+        // drops off the bottom. Keep body a block and every element within a column.
+        let out = `body { display: block !important; float: none !important; min-width: 0 !important; }
+          body * { max-width: 100% !important; min-width: 0 !important; box-sizing: border-box; }
+          body, p, div, li, td, th, a, span { overflow-wrap: break-word; }
+          pre { white-space: pre-wrap !important; }
+          img, svg, video { height: auto; }
+          html, body { background: ${t.bg} !important; color: ${t.fg} !important; }
           body { font-size: ${prefs.fontSize}% !important; }
           p, li, blockquote, span, div, h1, h2, h3, h4, h5, h6, td, th, em, strong, i, b, small { color: inherit !important; }
           a, a * { color: ${t.link} !important; }
@@ -632,9 +658,36 @@
         }
         return out;
       };
+      // The reader paginates by giving each chapter's <body> a fixed width (one
+      // page) and CSS columns. Some books override that width with
+      // `body.calibre { width: auto !important }`, which turns the chapter into
+      // one column several pages wide (lines run across pages). Re-apply the
+      // reader's width as !important every time it is set, so the book can't win.
+      const pinBodyWidth = contents => {
+        const body = contents.document?.body;
+        const width = body?.style.getPropertyValue('width');
+        if (width && body.style.getPropertyPriority('width') !== 'important') {
+          body.style.setProperty('width', width, 'important');
+        }
+      };
+      const guardWidth = contents => {
+        if (contents.__sksWidthGuard || typeof contents.width !== 'function') return;
+        contents.__sksWidthGuard = true;
+        const setWidth = contents.width.bind(contents);
+        contents.width = (...args) => {
+          const result = setWidth(...args);
+          pinBodyWidth(contents);
+          // epub.js expects the resulting width back, so measure it again after pinning.
+          const measured = parseInt(contents.window.getComputedStyle(contents.document.body).width, 10);
+          return Number.isFinite(measured) ? measured : result;
+        };
+        pinBodyWidth(contents);
+      };
+
       const inject = contents => {
         const doc = contents.document;
         if (!doc || !doc.head) return;
+        guardWidth(contents);
         let style = doc.getElementById('sks-reader-style');
         if (!style) {
           style = doc.createElement('style');
@@ -757,9 +810,14 @@
             if (!destroyed) rendition.display(cfi).catch(() => {});
           }
         },
-        resize: () => { if (!destroyed) rendition.resize(); },
+        resize: () => {
+          if (destroyed) return;
+          snapHostSize();
+          rendition.resize();
+        },
         destroy: () => {
           destroyed = true;
+          host.removeAttribute('style');
           try { rendition.destroy(); } catch {}
           try { epub.destroy(); } catch {}
         }
